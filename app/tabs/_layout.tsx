@@ -8,9 +8,20 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AppLayout() {
+  const { isReady, isSignedIn } = useAuth();
+
+  if (!isReady) {
+    return null;
+  }
+
+  if (!isSignedIn) {
+    return <Redirect href="/auth/login" />;
+  }
+
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

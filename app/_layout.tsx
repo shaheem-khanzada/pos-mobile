@@ -14,6 +14,7 @@ import { Slot, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { MoonIcon, SunIcon, SlashIcon } from '@/components/ui/icon';
+import { AuthProvider } from '@/contexts/auth-context';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -65,16 +66,18 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode={mode}>
       <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Slot />
-        {pathname === '/' && (
-          <Fab
-            onPress={handleToggleTheme}
-            className="m-6"
-            size="lg"
-          >
-            <FabIcon as={mode === 'system' ? SlashIcon : (effectiveColorScheme === 'dark' ? MoonIcon : SunIcon)} />
-          </Fab>
-        )}
+        <AuthProvider>
+          <Slot />
+          {pathname.startsWith('/tabs') && (
+            <Fab
+              onPress={handleToggleTheme}
+              className="m-6"
+              size="lg"
+            >
+              <FabIcon as={mode === 'system' ? SlashIcon : (effectiveColorScheme === 'dark' ? MoonIcon : SunIcon)} />
+            </Fab>
+          )}
+        </AuthProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );
