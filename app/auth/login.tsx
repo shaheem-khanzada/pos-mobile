@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { getApiErrorMessage } from '@/api/http/errors';
+import { getApiErrorMessage } from '@/payload/errors';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from '@/components/ui/icon';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/auth/use-auth';
 import { useLoginMutation } from '@/hooks/auth/use-auth-mutations';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

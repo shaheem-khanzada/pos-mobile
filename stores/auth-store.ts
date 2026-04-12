@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { AuthUser } from '@/api/auth/types';
+import type { User } from '@/payload/payload-types';
 
 /**
  * Everything we need after a successful login (or password reset that returns a new JWT).
@@ -10,13 +10,13 @@ import type { AuthUser } from '@/api/auth/types';
  */
 type AuthSessionPayload = {
   token: string;
-  user: AuthUser;
+  user: User;
   exp?: number | null;
 };
 
 type AuthState = {
   token: string | null;
-  user: AuthUser | null;
+  user: User | null;
   exp: number | null;
   setSession: (session: AuthSessionPayload) => void;
   clearSession: () => void;

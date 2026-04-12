@@ -9,7 +9,7 @@ export const unstable_settings = {
 };
 
 import { Redirect, Stack } from 'expo-router';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/auth/use-auth';
 
 export default function AppLayout() {
   const { isReady, isSignedIn } = useAuth();

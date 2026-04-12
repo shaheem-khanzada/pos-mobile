@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { getApiErrorMessage } from '@/api/http/errors';
+import { getApiErrorMessage } from '@/payload/errors';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';

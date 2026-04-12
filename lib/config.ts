@@ -10,7 +10,6 @@
  * as the dev server. Use your computer's LAN IP (e.g. `http://192.168.1.5:3000`)
  * from a phone, or `http://10.0.2.2:3000` from the Android emulator.
  */
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
 
-/** Payload collection slug used for auth REST routes (`/api/{slug}/login`, etc.). */
-export const USERS_SLUG = 'users';
+/** REST root PayloadSDK expects, e.g. `http://localhost:3000/api`. */
+export const PAYLOAD_API_BASE_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}/api`;
