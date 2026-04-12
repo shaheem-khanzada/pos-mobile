@@ -8,6 +8,7 @@ import {
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Slot, usePathname } from 'expo-router';
@@ -15,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { MoonIcon, SunIcon, SlashIcon } from '@/components/ui/icon';
 import { AuthProvider } from '@/contexts/auth-context';
+import { createAppQueryClient } from '@/hooks/api/query-client';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -47,6 +49,7 @@ function RootLayoutNav() {
   const pathname = usePathname();
   const systemColorScheme = useColorScheme();
   const [mode, setMode] = useState<'system' | 'light' | 'dark'>('system');
+  const [queryClient] = useState(() => createAppQueryClient());
 
   // Determine effective color scheme
   const effectiveColorScheme = mode === 'system'
@@ -66,18 +69,20 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode={mode}>
       <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AuthProvider>
-          <Slot />
-          {pathname.startsWith('/tabs') && (
-            <Fab
-              onPress={handleToggleTheme}
-              className="m-6"
-              size="lg"
-            >
-              <FabIcon as={mode === 'system' ? SlashIcon : (effectiveColorScheme === 'dark' ? MoonIcon : SunIcon)} />
-            </Fab>
-          )}
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Slot />
+            {pathname.startsWith('/tabs') && (
+              <Fab
+                onPress={handleToggleTheme}
+                className="m-6"
+                size="lg"
+              >
+                <FabIcon as={mode === 'system' ? SlashIcon : (effectiveColorScheme === 'dark' ? MoonIcon : SunIcon)} />
+              </Fab>
+            )}
+          </AuthProvider>
+        </QueryClientProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );

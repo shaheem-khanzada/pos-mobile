@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/auth-context';
+import { getApiErrorMessage } from '@/api/http/errors';
 import { AuthScreenLayout } from '@/components/auth/auth-screen-layout';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -21,16 +21,20 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from '@/components/ui/icon';
+import { useAuth } from '@/contexts/auth-context';
+import { useLoginMutation } from '@/hooks/auth/use-auth-mutations';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { isReady, isSignedIn, signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { isReady, isSignedIn } = useAuth();
+  const loginMutation = useLoginMutation();
+  const [email, setEmail] = useState('admin@gmail.com');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const emailInvalid = submitted && !emailPattern.test(email.trim());
   const passwordInvalid = submitted && password.length < 6;
@@ -41,14 +45,21 @@ export default function LoginScreen() {
     }
   }, [isReady, isSignedIn, router]);
 
-  const onSubmit = useCallback(async () => {
+  const onSubmit = useCallback(() => {
     setSubmitted(true);
+    setServerError(null);
     if (!emailPattern.test(email.trim()) || password.length < 6) {
       return;
     }
-    await signIn();
-    router.replace('/tabs/tab1');
-  }, [email, password, router, signIn]);
+    loginMutation.mutate(
+      { email: email.trim(), password },
+      {
+        onError: (err) => {
+          setServerError(getApiErrorMessage(err, 'Sign in failed'));
+        },
+      }
+    );
+  }, [email, password, loginMutation]);
 
   return (
     <AuthScreenLayout>
@@ -61,6 +72,14 @@ export default function LoginScreen() {
             Enter your email and password to continue.
           </Text>
         </Box>
+
+        {serverError ? (
+          <Box className="rounded-md border border-error-300 bg-error-50 px-3 py-2">
+            <Text size="sm" className="text-error-700">
+              {serverError}
+            </Text>
+          </Box>
+        ) : null}
 
         <VStack space="lg" className="w-full">
           <FormControl isInvalid={emailInvalid} isRequired>
@@ -122,8 +141,15 @@ export default function LoginScreen() {
           </Pressable>
         </HStack>
 
-        <Button size="lg" className="w-full" onPress={onSubmit}>
-          <ButtonText>Sign in</ButtonText>
+        <Button
+          size="lg"
+          className="w-full"
+          onPress={onSubmit}
+          disabled={loginMutation.isPending}
+        >
+          <ButtonText>
+            {loginMutation.isPending ? 'Signing in…' : 'Sign in'}
+          </ButtonText>
         </Button>
       </VStack>
     </AuthScreenLayout>

@@ -5,12 +5,10 @@ import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'expo-router';
+import { useLogoutMutation } from '@/hooks/auth/use-auth-mutations';
 
 export default function Tab1() {
-  const router = useRouter();
-  const { signOut } = useAuth();
+  const logoutMutation = useLogoutMutation();
 
   return (
     <Center className="flex-1">
@@ -26,12 +24,12 @@ export default function Tab1() {
           variant="outline"
           size="sm"
           className="mt-6"
-          onPress={async () => {
-            await signOut();
-            router.replace('/auth/login');
-          }}
+          disabled={logoutMutation.isPending}
+          onPress={() => logoutMutation.mutate()}
         >
-          <ButtonText>Sign out</ButtonText>
+          <ButtonText>
+            {logoutMutation.isPending ? 'Signing out…' : 'Sign out'}
+          </ButtonText>
         </Button>
       </VStack>
     </Center>
