@@ -13,3 +13,4 @@
 
 /** REST root PayloadSDK expects, e.g. `http://localhost:3000/api`. */
 export const PAYLOAD_API_BASE_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}/api`;
+export const PAYLOAD_MEDIA_BASE_URL = `${process.env.EXPO_PUBLIC_API_BASE_URL}`;

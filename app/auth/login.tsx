@@ -41,7 +41,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (isReady && isSignedIn) {
-      router.replace('/tabs/tab1');
+      router.replace('/tabs/orders');
     }
   }, [isReady, isSignedIn, router]);
 

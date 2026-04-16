@@ -37,10 +37,17 @@ export const payloadFetch: typeof fetch = async (input, init) => {
   if (token && !shouldSkipSessionJwt(url)) {
     headers.set('Authorization', `JWT ${token}`);
   }
-  return fetch(input, {
+  const response = await fetch(input, {
     ...init,
     headers,
   });
+
+  // If server rejects the current JWT/session, force local logout.
+  if ((response.status === 401 || response.status === 403) && token) {
+    useAuthStore.getState().clearSession();
+  }
+
+  return response;
 };
 
 /** Typed against `payload/payload-types.ts` — regenerate from admin (`payload generate:types`) and replace this file. */

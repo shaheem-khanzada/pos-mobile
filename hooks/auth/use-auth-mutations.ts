@@ -26,7 +26,7 @@ export function useLoginMutation() {
     },
     onSuccess: (data) => {
       useAuthStore.getState().setSession(data);
-      router.replace('/tabs/tab1');
+      router.replace('/tabs/orders');
     },
   });
 }
@@ -77,7 +77,7 @@ export function useResetPasswordMutation() {
         user: data.user,
         exp: null,
       });
-      router.replace('/tabs/tab1');
+      router.replace('/tabs/orders');
     },
   });
 }

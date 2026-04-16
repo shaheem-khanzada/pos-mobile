@@ -70,15 +70,6 @@ function RootLayoutNav() {
       <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <QueryClientProvider client={queryClient}>
           <Slot />
-          {pathname.startsWith('/tabs') && (
-            <Fab
-              onPress={handleToggleTheme}
-              className="m-6"
-              size="lg"
-            >
-              <FabIcon as={mode === 'system' ? SlashIcon : (effectiveColorScheme === 'dark' ? MoonIcon : SunIcon)} />
-            </Fab>
-          )}
         </QueryClientProvider>
       </ThemeProvider>
     </GluestackUIProvider>

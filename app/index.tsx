@@ -9,7 +9,7 @@ export default function Index() {
   }
 
   if (isSignedIn) {
-    return <Redirect href="/tabs/tab1" />;
+    return <Redirect href="/tabs/orders" />;
   }
 
   return <Redirect href="/auth/login" />;

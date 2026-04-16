@@ -1,35 +1,24 @@
-import EditScreenInfo from '@/components/EditScreenInfo';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
-import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
-import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useLogoutMutation } from '@/hooks/auth/use-auth-mutations';
 
-export default function Tab1() {
+export default function ProfileRoute() {
   const logoutMutation = useLogoutMutation();
 
   return (
     <Center className="flex-1">
       <VStack space="lg" className="w-full max-w-md items-center px-4">
-        <Heading className="font-bold text-2xl">Expo - Tab 1</Heading>
-        <Divider className="my-[30px] w-[80%]" />
-        <Text className="p-4 text-center">
-          Example below to use gluestack-ui components.
-        </Text>
-        <EditScreenInfo path="app/tabs/(tabs)/tab1.tsx" />
+        <Heading className="font-bold text-2xl">Profile</Heading>
         <Button
           action="secondary"
           variant="outline"
           size="sm"
-          className="mt-6"
           disabled={logoutMutation.isPending}
           onPress={() => logoutMutation.mutate()}
         >
-          <ButtonText>
-            {logoutMutation.isPending ? 'Signing out…' : 'Sign out'}
-          </ButtonText>
+          <ButtonText>{logoutMutation.isPending ? 'Signing out…' : 'Sign out'}</ButtonText>
         </Button>
       </VStack>
     </Center>
