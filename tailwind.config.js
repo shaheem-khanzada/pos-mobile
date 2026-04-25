@@ -4,14 +4,20 @@ module.exports = {
   content: [
     './app/**/*.{html,js,jsx,ts,tsx,mdx}',
     './components/**/*.{html,js,jsx,ts,tsx,mdx}',
+    './screens/**/*.{html,js,jsx,ts,tsx,mdx}',
   ],
   presets: [require('nativewind/preset')],
   important: 'html',
   safelist: [
     {
       pattern:
-        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|error|warning|muted|success|info|light|dark|primary)/,
+        /(bg|border|text|stroke|fill)-(primary|secondary|tertiary|error|success|warning|info|typography|outline|background|indicator|app)-(0|50|100|200|300|400|500|600|700|800|900|950|white|gray|black|pure|line|ink|error|warning|muted|success|info|light|dark|scrim|primary|canvas|surface|accent|page|pill-active-bg|pill-active-fg)/,
     },
+    'bg-app-pill-active-bg',
+    'text-app-pill-active-fg',
+    'border-primary-200',
+    'border-primary-500/30',
+    'text-label',
   ],
   theme: {
     extend: {
@@ -126,9 +132,9 @@ module.exports = {
           800: 'rgb(var(--color-typography-800)/<alpha-value>)',
           900: 'rgb(var(--color-typography-900)/<alpha-value>)',
           950: 'rgb(var(--color-typography-950)/<alpha-value>)',
-          white: '#FFFFFF',
-          gray: '#D4D4D4',
-          black: '#181718',
+          white: 'rgb(var(--color-typography-pure)/<alpha-value>)',
+          gray: 'rgb(var(--color-typography-line)/<alpha-value>)',
+          black: 'rgb(var(--color-typography-ink)/<alpha-value>)',
         },
         outline: {
           0: 'rgb(var(--color-outline-0)/<alpha-value>)',
@@ -162,13 +168,25 @@ module.exports = {
           muted: 'rgb(var(--color-background-muted)/<alpha-value>)',
           success: 'rgb(var(--color-background-success)/<alpha-value>)',
           info: 'rgb(var(--color-background-info)/<alpha-value>)',
-          light: '#FBFBFB',
-          dark: '#181719',
+          light: 'rgb(var(--color-background-light)/<alpha-value>)',
+          /** Modal/drawer overlay — prefer `scrim`; `dark` kept for compatibility */
+          dark: 'rgb(var(--color-background-scrim)/<alpha-value>)',
+          scrim: 'rgb(var(--color-background-scrim)/<alpha-value>)',
         },
         indicator: {
           primary: 'rgb(var(--color-indicator-primary)/<alpha-value>)',
           info: 'rgb(var(--color-indicator-info)/<alpha-value>)',
           error: 'rgb(var(--color-indicator-error)/<alpha-value>)',
+        },
+        app: {
+          /** Page / canvas — same as `background-0` (see gluestack config) */
+          page: 'rgb(var(--color-background-0)/<alpha-value>)',
+          canvas: 'rgb(var(--color-background-0)/<alpha-value>)',
+          surface: 'rgb(var(--color-background-50)/<alpha-value>)',
+          accent: 'rgb(var(--color-primary-500)/<alpha-value>)',
+          /** Selected pill / chip (tokens: `--color-app-pill-active-*`) */
+          'pill-active-bg': 'rgb(var(--color-app-pill-active-bg)/<alpha-value>)',
+          'pill-active-fg': 'rgb(var(--color-app-pill-active-fg)/<alpha-value>)',
         },
       },
       fontFamily: {
@@ -183,9 +201,12 @@ module.exports = {
       },
       fontWeight: {
         extrablack: '950',
+        black: '900',
       },
       fontSize: {
-        '2xs': '10px',
+        '2xs': ['10px', { lineHeight: '14px' }],
+        /** Field labels (Create Product, auth) — matches former `text-[11px]` */
+        label: ['11px', { lineHeight: '14px' }],
       },
       boxShadow: {
         'hard-1': '-2px 2px 8px 0px rgba(38, 38, 38, 0.20)',
@@ -197,6 +218,12 @@ module.exports = {
         'soft-2': '0px 0px 20px rgba(38, 38, 38, 0.2)',
         'soft-3': '0px 0px 30px rgba(38, 38, 38, 0.1)',
         'soft-4': '0px 0px 40px rgba(38, 38, 38, 0.1)',
+        /** Barely-there elevation (cards, tiles) */
+        'card-faint':
+          '0px 1px 3px rgba(15, 23, 42, 0.05), 0px 2px 10px rgba(15, 23, 42, 0.04)',
+        /** Brand emerald glow — reuse for logo tiles, primary CTAs, FABs */
+        'primary-glow-sm': '0px 4px 12px rgba(16, 185, 129, 0.22)',
+        'primary-glow-md': '0px 6px 14px rgba(16, 185, 129, 0.3)',
       },
     },
   },

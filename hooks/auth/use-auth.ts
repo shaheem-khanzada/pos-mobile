@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuthStore } from '@/screens/auth/stores/auth-store';
 
 /**
  * Routing helpers on top of Zustand persist: wait until AsyncStorage has been

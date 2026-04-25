@@ -1,8 +1,7 @@
 import { PayloadSDK } from '@payloadcms/sdk';
 
 import { PAYLOAD_API_BASE_URL } from '@/lib/config';
-import type { Config } from '@/payload/payload-types';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuthStore } from '@/screens/auth/stores/auth-store';
 
 /**
  * Payload's own requests should not send an expired session JWT on the handful
@@ -33,25 +32,30 @@ function resolveRequestUrl(input: RequestInfo | URL): string {
 export const payloadFetch: typeof fetch = async (input, init) => {
   const url = resolveRequestUrl(input);
   const headers = new Headers(init?.headers ?? undefined);
-  const token = useAuthStore.getState().token;
+  const { token, tenantId } = useAuthStore.getState();
+
   if (token && !shouldSkipSessionJwt(url)) {
     headers.set('Authorization', `JWT ${token}`);
   }
+  if (tenantId) {
+    headers.set('tenant', tenantId);
+  }
+
   const response = await fetch(input, {
     ...init,
     headers,
   });
 
   // If server rejects the current JWT/session, force local logout.
-  if ((response.status === 401 || response.status === 403) && token) {
+  if ((response.status === 401) && token) {
     useAuthStore.getState().clearSession();
   }
 
   return response;
 };
 
-/** Typed against `payload/payload-types.ts` — regenerate from admin (`payload generate:types`) and replace this file. */
-export const payloadSdk = new PayloadSDK<Config>({
+/** Untyped SDK instance — use `@/payload/types` + normalizers in app code. */
+export const payloadSdk = new PayloadSDK({
   baseURL: PAYLOAD_API_BASE_URL,
   fetch: payloadFetch,
 });

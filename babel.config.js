@@ -16,7 +16,8 @@ module.exports = function (api) {
           },
         },
       ],
-      'react-native-worklets/plugin',
+      // Reanimated: must be last: https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started/#step-2-add-reanimateds-babel-plugin
+      'react-native-reanimated/plugin',
     ],
   };
 };

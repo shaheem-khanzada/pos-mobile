@@ -1,117 +1,100 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
-import type { Product } from '@/payload/payload-types';
+import type { Product } from '@/payload/types';
 import { payloadSdk } from '@/payload/sdk';
+import { showApiErrorToast } from '@/toast/api-toast';
 
-type ProductListParams = {
-  limit: number;
-  search?: string;
-  sort?: string;
-};
-
-type CreateProductInput = {
-  data: Omit<Product, 'id' | 'image' | 'createdAt' | 'updatedAt'>;
-  file: {
-    uri: string;
-    name: string;
-    type: string;
-  };
-  alt: string;
-};
-
-type UpdateProductInput = {
-  id: string;
-  data: Omit<Product, 'id' | 'image' | 'createdAt' | 'updatedAt'>;
-  file?: {
-    uri: string;
-    name: string;
-    type: string;
-  } | null;
-  alt: string;
-};
-
-async function uploadMediaFile(file: CreateProductInput['file'], alt: string): Promise<string> {
-  const formData = new FormData();
-  formData.append('_payload', JSON.stringify({ alt }));
-  formData.append('alt', alt);
-  formData.append(
-    'file',
-    {
-      uri: file.uri,
-      name: file.name,
-      type: file.type,
-    } as unknown as Blob
-  );
-
-  const uploadResponse = await payloadSdk.request({
-    method: 'POST',
-    path: '/media',
-    init: {
-      body: formData,
-    },
-  });
-
-  const mediaResponse = await uploadResponse.json();
-  return mediaResponse.doc.id;
-}
-
-/** Infinite paginated products list using Payload SDK `find`. */
-export function useProductsListQuery(params?: Partial<ProductListParams>) {
+export function useProductsListQuery(params?: { limit?: number; sort?: string }) {
   const limit = params?.limit ?? 10;
-
   return useInfiniteQuery({
     queryKey: ['products', { limit, sort: params?.sort }],
     initialPageParam: 1,
     queryFn: async ({ pageParam }) => {
-      try {
-        const result = await payloadSdk.find({
-          collection: 'products',
-          page: pageParam,
-          limit,
-          sort: params?.sort,
-        });
-        return result;
-      } catch (error) {
-        console.error('Failed to fetch products list:', error);
-        throw error;
-      }
+      const page = await payloadSdk.find({
+        collection: 'products',
+        page: pageParam,
+        limit,
+        sort: params?.sort,
+        depth: 2,
+      });
+      return page;
     },
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
+    /** Flat list for UI; cache still holds paginated pages (for `getNextPageParam` / `fetchNextPage`). */
+    select: (data) =>
+      data.pages.flatMap((page) => page.docs ?? []) as Product[],
+  });
+}
+
+export function useProductByIdQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const res = await payloadSdk.find({
+        collection: 'products',
+        where: { id: { equals: id! } },
+        limit: 1,
+        depth: 2,
+      });
+      const doc = res.docs?.[0];
+      if (!doc) throw new Error('Product not found');
+      return doc;
+    },
+    enabled: Boolean(id),
   });
 }
 
 export function useDeleteProductMutation() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (product: Product) => {
-      return payloadSdk.delete({
+    mutationFn: (product: Product) =>
+      payloadSdk.delete({
         collection: 'products',
         id: product.id,
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error) => {
+      showApiErrorToast('Delete product', error);
     },
   });
 }
 
 export function useCreateProductMutation() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (input: CreateProductInput) => {
-      const mediaId = await uploadMediaFile(input.file, input.alt);
-
-      return payloadSdk.create({
+    mutationFn: async (input: { product: Partial<Product> }) => {
+      const { variantTypes: _variantTypes, ...productPayload } = input.product;
+      const result = await payloadSdk.create({
         collection: 'products',
-        data: {
-          ...input.data,
-          image: mediaId,
-        },
+        data: productPayload as never,
       });
+      return result;
     },
-    onSuccess: () => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['products'] });
+      const previous = queryClient.getQueryData(['products']);
+      const optimisticProduct = {
+        id: `temp-${Date.now()}`,
+        title: input.product.title,
+        inventory: input.product.inventory ?? 0,
+        priceInPKR: input.product.priceInPKR ?? 0,
+      };
+      return { previous, optimisticProduct };
+    },
+    onError: (error, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(['products'], ctx.previous);
+      }
+      showApiErrorToast('Create product', error);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
@@ -119,26 +102,29 @@ export function useCreateProductMutation() {
 
 export function useEditProductMutation() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (input: UpdateProductInput) => {
-      let imageId: string | undefined;
-      if (input.file) {
-        imageId = await uploadMediaFile(input.file, input.alt);
-      }
-
+    mutationFn: async (input: {
+      id: string;
+      product: Partial<Product>;
+    }) => {
       return payloadSdk.update({
         collection: 'products',
         id: input.id,
-        data: {
-          ...input.data,
-          ...(imageId ? { image: imageId } : {}),
-        },
+        data: input.product as never,
       });
     },
-    onSuccess: (_, variables) => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: ['products'] });
+      const previous = queryClient.getQueryData(['products']);
+      return { previous, input };
+    },
+    onError: (error, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['products'], ctx.previous);
+      showApiErrorToast('Update product', error);
+    },
+    onSettled: (_, __, vars) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['product', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['product', vars.id] });
     },
   });
 }

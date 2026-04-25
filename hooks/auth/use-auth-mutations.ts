@@ -2,7 +2,11 @@ import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 
 import { payloadSdk } from '@/payload/sdk';
-import { useAuthStore } from '@/stores/auth-store';
+import {
+  useAuthStore,
+} from '@/screens/auth/stores/auth-store';
+import { showApiErrorToast } from '@/toast/api-toast';
+import { User } from '@/payload/types';
 
 /** Sign in with email/password; persists JWT + user then navigates to tabs. */
 export function useLoginMutation() {
@@ -15,6 +19,9 @@ export function useLoginMutation() {
         data: body,
       });
       const token = result.token;
+      const tenants = result.user?.tenants ?? [];
+      const tenantId = tenants[0]?.id ?? null;
+      
       if (!token) {
         throw new Error('Login succeeded but the server did not return a token.');
       }
@@ -22,11 +29,16 @@ export function useLoginMutation() {
         token,
         user: result.user,
         exp: result.exp ?? 0,
+        tenantId,
       };
     },
     onSuccess: (data) => {
-      useAuthStore.getState().setSession(data);
+      useAuthStore.getState().setSession(data as any);
+      useAuthStore.getState().setTenantId(data.tenantId);
       router.replace('/tabs/orders');
+    },
+    onError: (error) => {
+      showApiErrorToast('Login', error);
     },
   });
 }
@@ -43,6 +55,9 @@ export function useForgotPasswordMutation() {
         collection: 'users',
         data: body,
       }),
+    onError: (error) => {
+      showApiErrorToast('Forgot password', error);
+    },
   });
 }
 
@@ -63,21 +78,28 @@ export function useResetPasswordMutation() {
         },
       });
       const token = result.token;
+      const tenants = result.user?.tenants ?? [];
+      const tenantId = tenants[0]?.id ?? null;
       if (!token) {
         throw new Error('Password was reset but the server did not return a token.');
       }
       return {
         token,
         user: result.user,
+        tenantId: tenantId,
       };
     },
     onSuccess: (data) => {
       useAuthStore.getState().setSession({
         token: data.token,
-        user: data.user,
+        user: data.user as unknown as User,
         exp: null,
       });
+      useAuthStore.getState().setTenantId(data.tenantId);
       router.replace('/tabs/orders');
+    },
+    onError: (error) => {
+      showApiErrorToast('Reset password', error);
     },
   });
 }
@@ -97,6 +119,9 @@ export function useLogoutMutation() {
     onSettled: () => {
       useAuthStore.getState().clearSession();
       router.replace('/auth/login');
+    },
+    onError: (error) => {
+      showApiErrorToast('Logout', error);
     },
   });
 }

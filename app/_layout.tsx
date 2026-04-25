@@ -11,11 +11,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Slot, usePathname } from 'expo-router';
+import { router, Slot, usePathname } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { Fab, FabIcon } from '@/components/ui/fab';
-import { MoonIcon, SunIcon, SlashIcon } from '@/components/ui/icon';
+import { MoonIcon, SunIcon, SlashIcon, AddIcon } from '@/components/ui/icon';
 import { createAppQueryClient } from '@/hooks/api/query-client';
+import { AppToast } from '@/toast';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -66,12 +68,15 @@ function RootLayoutNav() {
   };
 
   return (
-    <GluestackUIProvider mode={mode}>
-      <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <QueryClientProvider client={queryClient}>
-          <Slot />
-        </QueryClientProvider>
-      </ThemeProvider>
-    </GluestackUIProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GluestackUIProvider mode={mode}>
+        <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <QueryClientProvider client={queryClient}>
+            <Slot />
+            <AppToast />
+          </QueryClientProvider>
+        </ThemeProvider>
+      </GluestackUIProvider>
+    </GestureHandlerRootView>
   );
 }

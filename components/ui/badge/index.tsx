@@ -19,7 +19,7 @@ const badgeStyle = tva({
     action: {
       error: 'bg-background-error border-error-300',
       warning: 'bg-background-warning border-warning-300',
-      success: 'bg-background-success border-success-300',
+      success: 'bg-background-success border-success-300 border-emerald-500',
       info: 'bg-background-info border-info-300',
       muted: 'bg-background-muted border-background-300',
     },
@@ -42,7 +42,7 @@ const badgeTextStyle = tva({
     action: {
       error: 'text-error-600',
       warning: 'text-warning-600',
-      success: 'text-success-600',
+      success: 'text-emerald-500',
       info: 'text-info-600',
       muted: 'text-background-800',
     },
@@ -83,7 +83,7 @@ const badgeIconStyle = tva({
     action: {
       error: 'text-error-600',
       warning: 'text-warning-600',
-      success: 'text-success-600',
+      success: 'text-emerald-500',
       info: 'text-info-600',
       muted: 'text-background-800',
     },

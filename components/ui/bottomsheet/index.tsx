@@ -95,6 +95,11 @@ export const BottomSheet = ({
   );
 };
 
+/** Access open/close from descendants of {@link BottomSheet} (e.g. programmatic open with portal outside a list). */
+export function useBottomSheetContext() {
+  return useContext(BottomSheetContext);
+}
+
 export const BottomSheetPortal = ({
   snapPoints,
   handleComponent: DragIndicator,

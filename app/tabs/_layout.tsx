@@ -10,6 +10,7 @@ export const unstable_settings = {
 
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/hooks/auth/use-auth';
+import { CartItemsProvider } from '@/screens/orders/stores/cart-items-context';
 
 export default function AppLayout() {
   const { isReady, isSignedIn } = useAuth();
@@ -23,10 +24,46 @@ export default function AppLayout() {
   }
 
   return (
+    <CartItemsProvider>
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="create-product"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="create-variant"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="create-order"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="select-products"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="barcode-scanner"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="printers"
         options={{
           headerShown: false,
           animation: 'slide_from_right',
@@ -40,5 +77,6 @@ export default function AppLayout() {
         }}
       />
     </Stack>
+    </CartItemsProvider>
   );
 }
