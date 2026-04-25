@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { ArrowLeft, Phone, Sun, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { ElementRef } from 'react';
+import type { ComponentRef } from 'react';
 import { Icon } from '@/components/ui/icon';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
@@ -15,6 +15,7 @@ import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import {
   fieldLabelClass,
   inputTextClass,
@@ -23,16 +24,11 @@ import {
   variationCardSurfaceClass,
 } from '@/theme/ui';
 import { useCreateCartMutation } from '@/hooks/use-carts-mutations';
-import { buildCartCreatePayload } from '@/screens/orders/utils/build-cart-create-payload';
 import { CartItemRow } from '@/screens/orders/components/create-order/cart-item';
 import { PlaceOrderBar } from '@/screens/orders/components/create-order/place-order-bar';
-import { cartItemListKey, cartItemUnitPrice } from '@/screens/orders/types';
+import { cartItemListKey } from '@/screens/orders/types';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
+import { Cart } from '@/payload/types';
 
 const PAYMENT_OPTIONS = [
   { id: 'cash' as const, label: 'CASH' },
@@ -40,25 +36,21 @@ const PAYMENT_OPTIONS = [
   { id: 'online' as const, label: 'ONLINE' },
 ];
 
-type PaymentMethodId = (typeof PAYMENT_OPTIONS)[number]['id'];
-
 export function CreateOrderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { cartItems, setCartItems } = useCartItems();
+
+  const { cartItems, setCartItems, subtotal, changeQty, removeCartItem } = useCartItems();
+
   const createCartMutation = useCreateCartMutation();
-  const scrollRef = useRef<ElementRef<typeof ScrollView>>(null);
+
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [orderSectionY, setOrderSectionY] = useState<number | null>(null);
+
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [discountText, setDiscountText] = useState('0');
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethodId>('cash');
-
-  const subtotal = useMemo(
-    () => cartItems.reduce((sum, l) => sum + cartItemUnitPrice(l) * l.quantity, 0),
-    [cartItems]
-  );
+  const [paymentMethod, setPaymentMethod] = useState<Cart['paymentMethod']>('cash');
 
   const discount = useMemo(() => {
     const n = parseFloat(discountText.replace(/[^0-9.]/g, ''));
@@ -81,28 +73,23 @@ export function CreateOrderScreen() {
     router.push('/tabs/select-products');
   }, [router]);
 
-  const changeQty = useCallback((id: string, qty: number) => {
-    setCartItems((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, quantity: qty } : l))
-    );
-  }, []);
-
-  const removeCartItem = useCallback((id: string) => {
-    setCartItems((prev) => prev.filter((l) => l.id !== id));
-  }, []);
-
   const onPlaceOrder = useCallback(async () => {
     if (cartItems.length === 0) {
       Alert.alert('No items', 'Add at least one product before placing the order.');
       return;
     }
-    const payload = buildCartCreatePayload({
-      cartItems,
-      customerName: fullName,
-      customerPhone: phone,
-      paymentUiId: paymentMethod,
-      subtotalAfterDiscount: total,
-    });
+
+    const payload: Partial<Cart> = {
+      customerName: fullName.trim() || 'Guest',
+      customerPhone: phone.trim() || null,
+      paymentMethod: paymentMethod,
+      items: cartItems,
+      subtotal: total,
+      currency: 'PKR',
+      status: 'purchased',
+      purchasedAt: new Date().toISOString(),
+    };
+
     try {
       await createCartMutation.mutateAsync(payload);
       setCartItems([]);

@@ -21,6 +21,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { useProductsListQuery } from '@/hooks/use-products-mutations';
+import { formatRs } from '@/lib/format-rs';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
 import {
   addOrIncrementCatalogCartItem,
@@ -54,11 +55,6 @@ const SHEET_HANDLE_PILL = {
   light: 'rgb(161, 161, 170)',
   dark: 'rgb(113, 113, 122)',
 } as const;
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 type LastScanSummary = {
   title: string;

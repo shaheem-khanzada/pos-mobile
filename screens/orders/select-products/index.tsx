@@ -20,6 +20,7 @@ import {
   useBottomSheetContext,
 } from '@/components/ui/bottomsheet';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
 import { useProductsListQuery } from '@/hooks/use-products-mutations';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
@@ -40,11 +41,6 @@ import {
 import { SelectedProductListSheetContent } from '@/components/selected-product-list-sheet';
 import { ProductPickerItem } from '@/screens/orders/components/select-products/product-picker-item';
 import { PlaceOrderBar } from '@/screens/orders/components/create-order/place-order-bar';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 type SheetMode = 'variant' | 'selection' | null;
 

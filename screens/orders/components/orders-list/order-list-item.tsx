@@ -7,13 +7,9 @@ import { Icon } from '@/components/ui/icon';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { CircleDollarSign, Clock, Printer } from 'lucide-react-native';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass, variationCardSurfaceClass } from '@/theme/ui';
 import type { OrderListItem, OrderStatus } from '@/screens/orders/orders-list/types';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 const statusBadgeAction: Record<
   OrderStatus,

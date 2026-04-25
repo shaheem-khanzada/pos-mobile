@@ -8,17 +8,13 @@ import { Image } from '@/components/ui/image';
 import { Icon } from '@/components/ui/icon';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { variationCardSurfaceClass } from '@/theme/ui';
 import {
   catalogHasVariants,
   catalogMinPrice,
   type CatalogProduct,
 } from '@/screens/orders/utils/product-catalog';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 type ProductPickerItemProps = {
   product: CatalogProduct;

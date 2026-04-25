@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/icon';
 import { Package } from 'lucide-react-native';
 import type { Product } from '@/payload/types';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { variationRowCardClass } from '@/theme/ui';
 
 const LOW_STOCK_THRESHOLD = 15;
@@ -17,11 +18,6 @@ type ProductListItemProps = {
   categoryLabel: string;
   onPress: (product: Product) => void;
 };
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 export function ProductListItem({
   product,

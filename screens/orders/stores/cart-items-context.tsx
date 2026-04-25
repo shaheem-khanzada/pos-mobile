@@ -1,29 +1,53 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import { create } from 'zustand';
 import type { CartItem } from '@/payload/types';
+import { cartItemUnitPrice } from '../types';
 
-type CartItemsContextValue = {
+type SetCartItemsArg =
+  | CartItem[]
+  | ((prev: CartItem[]) => CartItem[]);
+
+type CartItemsStore = {
   cartItems: CartItem[];
-  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  setCartItems: (updater: SetCartItemsArg) => void;
+  subtotal: number;
+  changeQty: (id: string, qty: number) => void;
+  removeCartItem: (id: string) => void;
 };
 
-const CartItemsContext = createContext<CartItemsContextValue | null>(null);
-
-export function CartItemsProvider({ children }: { children: React.ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  const value = useMemo(() => ({ cartItems, setCartItems }), [cartItems]);
-
-  return (
-    <CartItemsContext.Provider value={value}>
-      {children}
-    </CartItemsContext.Provider>
-  );
+function calcSubtotal(items: CartItem[]): number {
+  return items.reduce((sum, l) => sum + cartItemUnitPrice(l) * l.quantity, 0);
 }
 
-export function useCartItems() {
-  const ctx = useContext(CartItemsContext);
-  if (!ctx) {
-    throw new Error('useCartItems must be used within CartItemsProvider');
-  }
-  return ctx;
-}
+export const useCartItems = create<CartItemsStore>((set) => ({
+  cartItems: [],
+  setCartItems: (updater) =>
+    set((state) => {
+      const nextItems =
+        typeof updater === 'function'
+          ? (updater as (prev: CartItem[]) => CartItem[])(state.cartItems)
+          : updater;
+      return {
+        cartItems: nextItems,
+        subtotal: calcSubtotal(nextItems),
+      };
+    }),
+  subtotal: 0,
+  changeQty: (id, qty) =>
+    set((state) => {
+      const nextItems = state.cartItems.map((l) =>
+        l.id === id ? { ...l, quantity: qty } : l
+      );
+      return {
+        cartItems: nextItems,
+        subtotal: calcSubtotal(nextItems),
+      };
+    }),
+  removeCartItem: (id) =>
+    set((state) => {
+      const nextItems = state.cartItems.filter((l) => l.id !== id);
+      return {
+        cartItems: nextItems,
+        subtotal: calcSubtotal(nextItems),
+      };
+    }),
+}));

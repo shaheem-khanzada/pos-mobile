@@ -5,11 +5,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { cn } from '@/lib/cn';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
+import { formatRs } from '@/lib/format-rs';
 
 export type SheetQtyRowCardProps = {
   title: string;

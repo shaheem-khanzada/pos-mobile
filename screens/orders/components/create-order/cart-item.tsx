@@ -6,13 +6,9 @@ import { VStack } from '@/components/ui/vstack';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import type { CartItem } from '@/payload/types';
 import { cartItemTitle, cartItemUnitPrice } from '@/screens/orders/types';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 type CartItemRowProps = {
   line: CartItem;

@@ -7,11 +7,7 @@ import { VStack } from '@/components/ui/vstack';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
+import { formatRs } from '@/lib/format-rs';
 
 type PlaceOrderBarProps = {
   total: number;

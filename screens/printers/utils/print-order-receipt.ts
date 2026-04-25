@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 
 import type { Cart, CartItem } from '@/payload/types';
+import { formatRs } from '@/lib/format-rs';
 import { cartOrderNumberLabel } from '@/screens/orders/orders-list/map-cart-to-order-list-item';
 import { cartItemTitle, cartItemUnitPrice } from '@/screens/orders/types';
 import { usePrinterStore } from '@/screens/printers/store';
@@ -8,11 +9,6 @@ import { printBleReceipt } from './ble-printer';
 const RECEIPT_WIDTH = 32;
 const SHOP_NAME = 'POSH STORE';
 const FOOTER_LINES = ['Thank you for shopping!', 'Please visit again'];
-
-function formatRs(price: number): string {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 function paymentLabel(method: Cart['paymentMethod']): string {
   if (method === 'online') return 'Card / Online';

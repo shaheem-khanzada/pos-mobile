@@ -22,17 +22,13 @@ import {
   useBottomSheetContext,
 } from '@/components/ui/bottomsheet';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass, variationCardSurfaceClass } from '@/theme/ui';
 import type { CartItem } from '@/payload/types';
 import {
   cartItemListKey,
   cartItemUnitPrice,
 } from '@/screens/orders/types';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 function formatPkrAmount(price: number) {
   const n = Number.isFinite(price) ? price : 0;

@@ -1,12 +1,17 @@
 import { setToast } from '@/toast/store';
+import { PayloadSDKError } from '@payloadcms/sdk';
 
 type UnknownError = unknown;
 
 export function extractApiErrorMessage(error: UnknownError): string {
+  if (error instanceof PayloadSDKError) {
+    return error.message;
+  }
+  
   if (error instanceof Error && error.message?.trim()) {
     return error.message.trim();
   }
-
+ 
   if (typeof error === 'object' && error !== null) {
     const anyError = error as {
       message?: unknown;

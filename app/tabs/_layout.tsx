@@ -10,7 +10,6 @@ export const unstable_settings = {
 
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/hooks/auth/use-auth';
-import { CartItemsProvider } from '@/screens/orders/stores/cart-items-context';
 
 export default function AppLayout() {
   const { isReady, isSignedIn } = useAuth();
@@ -24,7 +23,6 @@ export default function AppLayout() {
   }
 
   return (
-    <CartItemsProvider>
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
@@ -77,6 +75,5 @@ export default function AppLayout() {
         }}
       />
     </Stack>
-    </CartItemsProvider>
   );
 }

@@ -82,7 +82,7 @@ export interface Cart {
   currency?: 'PKR' | null;
   customerName: string;
   customerPhone?: string | null;
-  paymentMethod: 'cash' | 'online';
+  paymentMethod: 'cash' | 'online' | 'card';
   status?: ('active' | 'purchased' | 'abandoned') | null;
   updatedAt: string;
   createdAt: string;

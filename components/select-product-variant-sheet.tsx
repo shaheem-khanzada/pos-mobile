@@ -13,13 +13,9 @@ import {
 } from '@/components/ui/bottomsheet';
 import { SheetQtyRowCard } from '@/components/orders/sheet-qty-row-card';
 import { cn } from '@/lib/cn';
+import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass } from '@/theme/ui';
 import type { CartItem, Product, Variant } from '@/payload/types';
-
-function formatRs(price: number) {
-  const n = Number.isFinite(price) ? price : 0;
-  return `Rs. ${Math.round(n).toLocaleString('en-PK')}`;
-}
 
 export type VariantSheetConfirmPayload = {
   variantId: string;
