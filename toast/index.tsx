@@ -43,7 +43,7 @@ export function AppToast() {
           const visual = visualByKind[variant] ?? visualByKind.error;
           return (
             <VStack pointerEvents="box-none" className="w-full px-4">
-              <HStack className="min-h-[88px] items-center gap-3 rounded-[30px] border border-outline-200 bg-app-surface px-4 py-4 shadow-hard-5 dark:border-outline-300">
+              <HStack className="min-h-[88px] items-center gap-3 rounded-[30px] border border-outline-100 bg-app-surface px-4 py-4 shadow-hard-5 dark:border-outline-100">
                 <HStack
                   className={cn(
                     'h-12 w-12 shrink-0 items-center justify-center rounded-full',
@@ -71,7 +71,7 @@ export function AppToast() {
                   accessibilityRole="button"
                   accessibilityLabel="Close toast"
                   onPress={clearToast}
-                  className="h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background-100 active:opacity-80 dark:bg-background-200"
+                  className="h-12 w-12 shrink-0 items-center justify-center rounded-full bg-background-100 active:opacity-80 dark:bg-[#1b1b1c]"
                 >
                   <Icon
                     as={X}

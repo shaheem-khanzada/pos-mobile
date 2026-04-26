@@ -149,7 +149,7 @@ export function ProductComposerScreen({
         }}
         onRecentMediaSelected={(media) => {
           setSelectedImage(null);
-          setImagePreviewUri(media.thumbnailURL);
+          setImagePreviewUri(media.url);
           setProduct({ media: media.id });
         }}
       >
@@ -188,7 +188,7 @@ export function ProductComposerScreen({
           <Box className="relative mb-10 w-full">
             <BottomSheetTrigger
               className={cn(
-                'min-h-[200px] w-full items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-outline-300 bg-app-surface',
+                'min-h-[200px] w-full items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-outline-100 bg-app-surface',
                 (selectedImage || imagePreviewUri) && 'border-0'
               )}
             >

@@ -9,12 +9,10 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import {
   BottomSheet,
-  BottomSheetBackdrop,
-  BottomSheetDragIndicator,
   BottomSheetItem,
-  BottomSheetPortal,
   BottomSheetScrollView,
 } from '@/components/ui/bottomsheet';
+import { BotomSheetWrapper } from '@/components/app-bottom-sheet';
 import { cn } from '@/lib/cn';
 import { useMediaListQuery } from '@/hooks/use-media-mutation';
 import type { Media } from '@/payload/types';
@@ -114,27 +112,14 @@ export function SelectProductImageSheet({
     }
   }, [finishWithAsset]);
 
-  const backdropComponent = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={1}
-        className="bg-black/50"
-      />
-    ),
-    []
-  );
-
   return (
     <BottomSheet key={instanceKey} snapToIndex={1}>
       {children}
 
-      <BottomSheetPortal
-        snapPoints={['25%', '88%']}
-        backdropComponent={backdropComponent}
+      <BotomSheetWrapper
+        snapPoints={['25%', '85%']}
+        enableDynamicSizing
         enablePanDownToClose
-        handleComponent={() => <BottomSheetDragIndicator className='bg-app-surface ' />}
       >
         <BottomSheetScrollView
           className="flex-1 bg-app-surface"
@@ -185,7 +170,7 @@ export function SelectProductImageSheet({
               <BottomSheetItem
                 closeOnSelect={false}
                 onPress={takePhoto}
-                className="min-h-[132px] flex-1 flex-col items-center justify-center rounded-3xl border border-outline-200 bg-background-100 px-3 py-5 active:opacity-90 dark:border-outline-300 dark:bg-background-200"
+                className="min-h-[132px] flex-1 flex-col items-center justify-center rounded-3xl bg-background-100 px-3 py-5 active:opacity-90 dark:bg-[#1b1b1c]"
               >
                 <VStack space="sm" className="items-center">
                   <Box className="rounded-2xl bg-blue-500/10 p-3">
@@ -204,15 +189,15 @@ export function SelectProductImageSheet({
             </HStack>
 
             <HStack className="flex-wrap justify-between gap-y-3">
-              {(mediaListQuery.data?.docs ?? []).map((media) => {
+              {(mediaListQuery.data ?? []).map((media) => {
                 if (typeof media === 'string') return null;
-                const imageUrl = media.thumbnailURL;
+                const imageUrl = media.url;
                 return (
                   <BottomSheetItem
                     key={media.id}
                     closeOnSelect={false}
                     onPress={() => selectExistingMedia(media)}
-                    className="aspect-square w-[31%] items-center justify-center overflow-hidden rounded-2xl bg-background-100 p-0 active:opacity-90 dark:bg-background-200"
+                    className="aspect-square w-[31%] items-center justify-center overflow-hidden rounded-2xl bg-background-100 p-0 active:opacity-90 dark:bg-[#1b1b1c]"
                   >
                     {imageUrl ? (
                       <Image
@@ -233,12 +218,12 @@ export function SelectProductImageSheet({
               })}
             </HStack>
             {!mediaListQuery.isLoading &&
-            (mediaListQuery.data?.docs ?? []).length === 0 ? (
+            (mediaListQuery.data ?? []).length === 0 ? (
               <Text className="text-sm text-secondary-500">No recent uploads yet.</Text>
             ) : null}
           </VStack>
         </BottomSheetScrollView>
-      </BottomSheetPortal>
+      </BotomSheetWrapper>
     </BottomSheet>
   );
 }

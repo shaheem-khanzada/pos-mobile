@@ -19,7 +19,7 @@ export interface User {
 export interface Media {
   id: string;
   alt: string;
-  thumbnailURL: string;
+  url: string;
 }
 
 export interface Category {

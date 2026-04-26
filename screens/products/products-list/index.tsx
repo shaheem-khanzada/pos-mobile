@@ -18,7 +18,6 @@ import { ProductListItem } from './components/product-list-item';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
 import { useProductsListQuery } from '@/hooks/use-products-mutations';
 import type { Product } from '@/payload/types';
-import { setToast } from '@/toast/store';
 
 export function ProductListScreen() {
   const router = useRouter();
@@ -75,7 +74,7 @@ export function ProductListScreen() {
           </Text>
           <Pressable
             onPress={() => router.push('/tabs/create-product')}
-            className="h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 active:opacity-90 dark:bg-primary-900/40"
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 active:opacity-90"
             accessibilityRole="button"
             accessibilityLabel="Add product"
           >
@@ -116,60 +115,6 @@ export function ProductListScreen() {
               </Text>
             </Box>
           </HStack>
-
-          <VStack space="sm" className="rounded-2xl border border-outline-200 bg-app-surface p-3 dark:border-outline-300">
-            <Text className={fieldLabelClass}>Toast tests</Text>
-            <HStack className="flex-wrap gap-2">
-              <Pressable
-                onPress={() =>
-                  setToast({
-                    variant: 'error',
-                    title: 'Action Failed',
-                    description: 'This product barcode is not registered.',
-                  })
-                }
-                className="rounded-full bg-error-500 px-3 py-1.5 active:opacity-85"
-              >
-                <Text className="text-2xs font-bold uppercase tracking-wide text-white">Error</Text>
-              </Pressable>
-              <Pressable
-                onPress={() =>
-                  setToast({
-                    variant: 'success',
-                    title: 'Saved',
-                    description: 'Product updated successfully.',
-                  })
-                }
-                className="rounded-full bg-success-500 px-3 py-1.5 active:opacity-85"
-              >
-                <Text className="text-2xs font-bold uppercase tracking-wide text-white">Success</Text>
-              </Pressable>
-              <Pressable
-                onPress={() =>
-                  setToast({
-                    variant: 'warning',
-                    title: 'Low Stock',
-                    description: 'Only 2 items are left in inventory.',
-                  })
-                }
-                className="rounded-full bg-warning-500 px-3 py-1.5 active:opacity-85"
-              >
-                <Text className="text-2xs font-bold uppercase tracking-wide text-white">Warning</Text>
-              </Pressable>
-              <Pressable
-                onPress={() =>
-                  setToast({
-                    variant: 'info',
-                    title: 'Syncing',
-                    description: 'We are syncing latest data.',
-                  })
-                }
-                className="rounded-full bg-info-500 px-3 py-1.5 active:opacity-85"
-              >
-                <Text className="text-2xs font-bold uppercase tracking-wide text-white">Info</Text>
-              </Pressable>
-            </HStack>
-          </VStack>
 
           <Box className="flex-1">
             <FlatList

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Layers, Minus, Plus, X } from 'lucide-react-native';
+import { Layers, X } from 'lucide-react-native';
 import { Box } from '@/components/ui/box';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -12,6 +12,7 @@ import {
   BottomSheetScrollView,
 } from '@/components/ui/bottomsheet';
 import { SheetQtyRowCard } from '@/components/orders/sheet-qty-row-card';
+import { QtyStepper } from '@/components/orders/qty-stepper';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass } from '@/theme/ui';
@@ -222,7 +223,7 @@ export function SelectProductVariantSheetContent({
             </Text>
           </VStack>
           <BottomSheetItem
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 p-0 active:opacity-80 dark:bg-background-200"
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 p-0 active:opacity-80 dark:bg-[#1b1b1c]"
             hitSlop={12}
           >
             <Icon
@@ -285,10 +286,10 @@ export function SelectProductVariantSheetContent({
                     key={v.id}
                     onPress={() => setSelectedVariantId(v.id)}
                     className={cn(
-                      'rounded-2xl border-2 px-4 py-3 active:opacity-95',
+                      'rounded-2xl border px-4 py-3 active:opacity-95',
                       selected
-                        ? 'border-primary-500 bg-primary-500/5 dark:bg-primary-950/20'
-                        : 'border-outline-200 bg-background-100 dark:border-outline-300 dark:bg-background-100'
+                        ? 'border-primary-500 bg-primary-500/5'
+                        : 'border-outline-100 dark:border-outline-100'
                     )}
                   >
                     <HStack className="items-center gap-3">
@@ -323,49 +324,21 @@ export function SelectProductVariantSheetContent({
 
             <HStack className="items-center justify-between">
               <Text className={fieldLabelClass}>QUANTITY</Text>
-              <HStack className="items-center gap-1 rounded-xl bg-background-100 px-1 py-1 dark:bg-background-100">
-                <Pressable
-                  onPress={() => setQty((q) => Math.max(1, q - 1))}
-                  className="h-9 w-9 items-center justify-center rounded-lg bg-background-200 active:opacity-70 dark:bg-background-200"
-                >
-                  <Icon
-                    as={Minus}
-                    size="sm"
-                    className="text-typography-700 dark:text-typography-200"
-                  />
-                </Pressable>
-                <Text className="min-w-[32px] text-center text-base font-bold text-typography-900 dark:text-typography-0">
-                  {qty}
-                </Text>
-                <Pressable
-                  onPress={() =>
-                    setQty((q) =>
-                      selectedVariant
-                        ? Math.min(
-                            Math.max(0, selectedVariant.inventory ?? 0),
-                            q + 1
-                          )
-                        : q + 1
-                    )
-                  }
-                  disabled={
-                    !!selectedVariant &&
-                    qty >= Math.max(0, selectedVariant.inventory ?? 0)
-                  }
-                  className={cn(
-                    'h-9 w-9 items-center justify-center rounded-lg bg-background-200 active:opacity-70 dark:bg-background-200',
-                    !!selectedVariant &&
-                      qty >= Math.max(0, selectedVariant.inventory ?? 0) &&
-                      'opacity-40'
-                  )}
-                >
-                  <Icon
-                    as={Plus}
-                    size="sm"
-                    className="text-typography-700 dark:text-typography-200"
-                  />
-                </Pressable>
-              </HStack>
+              <QtyStepper
+                qty={qty}
+                onDecrement={() => setQty((q) => Math.max(1, q - 1))}
+                onIncrement={() =>
+                  setQty((q) =>
+                    selectedVariant
+                      ? Math.min(Math.max(0, selectedVariant.inventory ?? 0), q + 1)
+                      : q + 1
+                  )
+                }
+                disableIncrement={
+                  !!selectedVariant &&
+                  qty >= Math.max(0, selectedVariant.inventory ?? 0)
+                }
+              />
             </HStack>
           </>
         )}

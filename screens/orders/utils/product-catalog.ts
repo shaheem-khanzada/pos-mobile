@@ -29,7 +29,7 @@ export const PRODUCT_CATALOG: Product[] = [
     title: 'Meezan Cooking Oil',
     slug: 'c1',
     categories: [],
-    media: { id: 'c1-media', alt: '', thumbnailURL: '' },
+    media: { id: 'c1-media', alt: '', url: '' },
     priceInPKR: 650,
     enableVariants: true,
     variants: [
@@ -43,7 +43,7 @@ export const PRODUCT_CATALOG: Product[] = [
     title: 'National Salt (1kg)',
     slug: 'c2',
     categories: [],
-    media: { id: 'c2-media', alt: '', thumbnailURL: '' },
+    media: { id: 'c2-media', alt: '', url: '' },
     priceInPKR: 40,
     enableVariants: false,
   },
@@ -52,7 +52,7 @@ export const PRODUCT_CATALOG: Product[] = [
     title: 'Tapal Danedar Tea',
     slug: 'c3',
     categories: [],
-    media: { id: 'c3-media', alt: '', thumbnailURL: '' },
+    media: { id: 'c3-media', alt: '', url: '' },
     priceInPKR: 210,
     enableVariants: true,
     variants: [

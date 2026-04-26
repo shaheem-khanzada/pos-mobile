@@ -1,18 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, StyleSheet, Vibration, View } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useColorScheme } from 'nativewind';
 import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { BlurView } from 'expo-blur';
 import { ArrowLeft, Settings } from 'lucide-react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SheetQtyRowCard } from '@/components/orders/sheet-qty-row-card';
-import {
-  BottomSheetDragIndicator,
-  BottomSheetScrollView,
-} from '@/components/ui/bottomsheet';
+import { BotomSheetWrapper } from '@/components/app-bottom-sheet';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
@@ -20,18 +14,14 @@ import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
+import { SelectedProductListSheetContent } from '@/components/selected-product-list-sheet';
 import { useProductsListQuery } from '@/hooks/use-products-mutations';
-import { formatRs } from '@/lib/format-rs';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
 import {
   addOrIncrementCatalogCartItem,
   addOrIncrementVariantCartItem,
 } from '@/screens/orders/utils/product-catalog';
-import {
-  cartItemListKey,
-  cartItemTitle,
-  cartItemUnitPrice,
-} from '@/screens/orders/types';
+import { cartItemUnitPrice } from '@/screens/orders/types';
 import { useBarcodeStore } from './stores/barcode-store';
 import { ExpoBarcodeCamera } from './components/expo-barcode-camera';
 import { resolveBarcodeToCatalogMatch } from './utils/resolve-barcode-match';
@@ -44,30 +34,9 @@ const SCAN_DEBOUNCE_MS = 350;
 
 const CART_SHEET_SNAPS = ['20%', '55%'];
 
-/** Matches `--color-background-50` (Tailwind `app.surface`) in gluestack config */
-const SHEET_SURFACE = {
-  light: 'rgb(255, 255, 255)',
-  dark: 'rgb(22, 22, 22)',
-} as const;
-
-/** Handle pill — visible on both surfaces */
-const SHEET_HANDLE_PILL = {
-  light: 'rgb(161, 161, 170)',
-  dark: 'rgb(113, 113, 122)',
-} as const;
-
-type LastScanSummary = {
-  title: string;
-  subtitle?: string;
-  barcode: string;
-  matched: boolean;
-};
-
 export function BarcodeScannerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const params = useLocalSearchParams<{ multi?: string }>();
   const isMulti =
     params.multi === '1' || params.multi === 'true' || params.multi === 'yes';
@@ -80,7 +49,6 @@ export function BarcodeScannerScreen() {
   const [cartSheetIndex, setCartSheetIndex] = useState(() =>
     isMulti && cartItems.length > 0 ? 0 : -1
   );
-  const [lastScan, setLastScan] = useState<LastScanSummary | null>(null);
   /** Multi-scan: pause camera after each read until user taps to resume. */
   const [scannerPaused, setScannerPaused] = useState(false);
 
@@ -111,17 +79,9 @@ export function BarcodeScannerScreen() {
     () => cartItems.reduce((s, l) => s + cartItemUnitPrice(l) * l.quantity, 0),
     [cartItems]
   );
-
-  const sheetChrome = useMemo(
-    () => ({
-      backgroundStyle: {
-        backgroundColor: isDark ? SHEET_SURFACE.dark : SHEET_SURFACE.light,
-      },
-      handleIndicatorStyle: {
-        backgroundColor: isDark ? SHEET_HANDLE_PILL.dark : SHEET_HANDLE_PILL.light,
-      },
-    }),
-    [isDark]
+  const totalUnits = useMemo(
+    () => cartItems.reduce((s, l) => s + l.quantity, 0),
+    [cartItems]
   );
 
   const onScannedValue = useCallback(
@@ -142,12 +102,6 @@ export function BarcodeScannerScreen() {
       }
 
       if (productsQuery.isPending && products.length === 0) {
-        setLastScan({
-          title: 'Loading products',
-          subtitle: 'Wait a moment, then scan again.',
-          barcode: value,
-          matched: false,
-        });
         setCartSheetIndex(0);
         setScannerPaused(true);
         return;
@@ -155,12 +109,6 @@ export function BarcodeScannerScreen() {
 
       const match = resolveBarcodeToCatalogMatch(products, value);
       if (!match) {
-        setLastScan({
-          title: 'No product found',
-          subtitle: 'Try another code or pick from the list.',
-          barcode: value,
-          matched: false,
-        });
         setCartSheetIndex(0);
         setScannerPaused(true);
         return;
@@ -168,22 +116,10 @@ export function BarcodeScannerScreen() {
 
       if (match.kind === 'simple') {
         setCartItems((prev) => addOrIncrementCatalogCartItem(prev, match.product));
-        setLastScan({
-          title: match.product.title,
-          subtitle: undefined,
-          barcode: value,
-          matched: true,
-        });
       } else {
         setCartItems((prev) =>
           addOrIncrementVariantCartItem(prev, match.product, match.variant)
         );
-        setLastScan({
-          title: match.product.title,
-          subtitle: match.variant.title ?? undefined,
-          barcode: value,
-          matched: true,
-        });
       }
 
       setCartSheetIndex(0);
@@ -205,6 +141,15 @@ export function BarcodeScannerScreen() {
     },
     [setCartItems]
   );
+  const removeCartItem = useCallback(
+    (lineId: string) => {
+      setCartItems((prev) => prev.filter((l) => l.id !== lineId));
+    },
+    [setCartItems]
+  );
+  const clearAllCartItems = useCallback(() => {
+    setCartItems([]);
+  }, [setCartItems]);
 
   return (
     <Box className="flex-1">
@@ -319,7 +264,7 @@ export function BarcodeScannerScreen() {
           />
           <VStack
             pointerEvents="none"
-            className="mx-5 max-w-[320px] rounded-2xl border border-outline-200 bg-app-surface px-5 py-4 shadow-lg dark:border-outline-300"
+            className="mx-5 max-w-[320px] rounded-2xl border border-outline-100 bg-app-surface px-5 py-4 shadow-lg dark:border-outline-100"
           >
             <Text className="text-center text-lg font-bold text-typography-900 dark:text-typography-0">
               Camera paused
@@ -332,88 +277,23 @@ export function BarcodeScannerScreen() {
       ) : null}
 
       {isMulti ? (
-        <BottomSheet
+        <BotomSheetWrapper
           index={cartSheetIndex}
           onChange={setCartSheetIndex}
           snapPoints={CART_SHEET_SNAPS}
           enableDynamicSizing={false}
-          enablePanDownToClose
           style={{ zIndex: 100 }}
-          backgroundStyle={sheetChrome.backgroundStyle}
-          handleIndicatorStyle={sheetChrome.handleIndicatorStyle}
-          handleComponent={() => (
-            <BottomSheetDragIndicator className="bg-app-surface" />
-          )}
+          enablePanDownToClose
         >
-          <BottomSheetScrollView
-            className="flex-1 bg-app-surface"
-            contentContainerClassName="px-5 pb-8 pt-1"
-            contentContainerStyle={{
-              paddingBottom: Math.max(32, insets.bottom + 16),
-            }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <VStack space="lg" className="w-full">
-              {lastScan ? (
-                <VStack className="border-b border-outline-200 pb-4 dark:border-outline-700">
-                  <Text className="text-2xs font-bold uppercase tracking-widest text-secondary-500 dark:text-typography-400">
-                    Last scanned
-                  </Text>
-                  <Text
-                    className={`mt-1 text-xl font-bold ${
-                      lastScan.matched
-                        ? 'text-typography-900 dark:text-typography-0'
-                        : 'text-error-600 dark:text-error-400'
-                    }`}
-                  >
-                    {lastScan.title}
-                  </Text>
-                  {lastScan.subtitle ? (
-                    <Text className="mt-1 text-sm leading-snug text-secondary-500 dark:text-typography-400">
-                      {lastScan.subtitle}
-                    </Text>
-                  ) : null}
-                  <Text className="mt-1 font-mono text-2xs text-secondary-400 dark:text-typography-500">
-                    {lastScan.barcode}
-                  </Text>
-                </VStack>
-              ) : null}
-
-              <VStack space="md" className="w-full">
-                <HStack className="items-center justify-between">
-                  <Text className="text-sm font-bold uppercase tracking-wide text-typography-900 dark:text-typography-0">
-                    In cart
-                  </Text>
-                  <Text className="text-sm font-semibold text-primary-500">
-                    {formatRs(subtotal)}
-                  </Text>
-                </HStack>
-                {cartItems.length === 0 ? (
-                  <Text className="py-4 text-center text-sm leading-snug text-secondary-500 dark:text-typography-400">
-                    Scan a product to add it to the order.
-                  </Text>
-                ) : (
-                  <VStack space="md" className="w-full">
-                    {cartItems.map((line) => (
-                      <SheetQtyRowCard
-                        key={cartItemListKey(line)}
-                        title={cartItemTitle(line)}
-                        unitPrice={cartItemUnitPrice(line)}
-                        qty={line.quantity}
-                        emphasized={line.quantity > 0}
-                        onDecrement={() => adjustCartLineQty(line.id, -1)}
-                        onIncrement={() => adjustCartLineQty(line.id, 1)}
-                        disableDecrement={line.quantity <= 0}
-                        disableIncrement={false}
-                      />
-                    ))}
-                  </VStack>
-                )}
-              </VStack>
-            </VStack>
-          </BottomSheetScrollView>
-        </BottomSheet>
+          <SelectedProductListSheetContent
+            cartItems={cartItems}
+            totalUnits={totalUnits}
+            subtotal={subtotal}
+            onAdjustCartItemQty={adjustCartLineQty}
+            onRemoveCartItem={removeCartItem}
+            onClearAll={clearAllCartItems}
+          />
+        </BotomSheetWrapper>
       ) : null}
     </Box>
   );

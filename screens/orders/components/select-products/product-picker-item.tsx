@@ -1,4 +1,4 @@
-import { Minus, Package, Plus } from 'lucide-react-native';
+import { Package, Plus } from 'lucide-react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
@@ -9,6 +9,7 @@ import { Icon } from '@/components/ui/icon';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
+import { QtyStepper } from '@/components/orders/qty-stepper';
 import { variationCardSurfaceClass } from '@/theme/ui';
 import {
   catalogHasVariants,
@@ -31,7 +32,7 @@ export function ProductPickerItem({
   onDecrement,
   onOpenVariantSheet,
 }: ProductPickerItemProps) {
-  const thumb = product.media.thumbnailURL;
+  const thumb = product.media.url;
   const hasImage = Boolean(thumb?.trim());
   const hasVariants = catalogHasVariants(product);
   const priceLabel = hasVariants
@@ -106,35 +107,12 @@ export function ProductPickerItem({
           ) : null}
         </Pressable>
       ) : (
-        <HStack className="shrink-0 items-center gap-1 rounded-xl bg-background-100 px-1 py-1 dark:bg-background-100">
-          <Pressable
-            onPress={onDecrement}
-            disabled={selectedQty <= 0}
-            className={cn(
-              'h-8 w-8 items-center justify-center rounded-lg active:opacity-70',
-              selectedQty <= 0 && 'opacity-40'
-            )}
-          >
-            <Icon
-              as={Minus}
-              size="sm"
-              className="text-typography-700 dark:text-typography-200"
-            />
-          </Pressable>
-          <Text className="min-w-[28px] text-center text-sm font-bold text-typography-900 dark:text-typography-0">
-            {selectedQty}
-          </Text>
-          <Pressable
-            onPress={onIncrement}
-            className="h-8 w-8 items-center justify-center rounded-lg active:opacity-70"
-          >
-            <Icon
-              as={Plus}
-              size="sm"
-              className="text-typography-700 dark:text-typography-200"
-            />
-          </Pressable>
-        </HStack>
+        <QtyStepper
+          qty={selectedQty}
+          onDecrement={onDecrement}
+          onIncrement={onIncrement}
+          disableDecrement={selectedQty <= 0}
+        />
       )}
     </HStack>
   );

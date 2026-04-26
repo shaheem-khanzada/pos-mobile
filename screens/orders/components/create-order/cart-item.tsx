@@ -1,10 +1,11 @@
-import { Minus, Package, Plus, Trash2 } from 'lucide-react-native';
+import { Package, Trash2 } from 'lucide-react-native';
 import { Pressable } from '@/components/ui/pressable';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
+import { QtyStepper } from '@/components/orders/qty-stepper';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import type { CartItem } from '@/payload/types';
@@ -27,7 +28,7 @@ export function CartItemRow({
   return (
     <HStack
       className={cn(
-        'items-center gap-3 border-b border-outline-200 py-4',
+        'items-center gap-3 border-b border-outline-100 py-4',
         isLast && 'border-b-0'
       )}
     >
@@ -56,33 +57,12 @@ export function CartItemRow({
         </Text>
       </VStack>
 
-      <HStack className="shrink-0 items-center gap-1 rounded-xl bg-background-100 px-1 py-1 dark:bg-background-100">
-        <Pressable
-          onPress={() =>
-            onChangeQty(line.id, Math.max(1, line.quantity - 1))
-          }
-          className="h-8 w-8 items-center justify-center rounded-lg active:opacity-70"
-        >
-          <Icon
-            as={Minus}
-            size="sm"
-            className="text-typography-700 dark:text-typography-200"
-          />
-        </Pressable>
-        <Text className="min-w-[28px] text-center text-sm font-bold text-typography-900 dark:text-typography-0">
-          {line.quantity}
-        </Text>
-        <Pressable
-          onPress={() => onChangeQty(line.id, line.quantity + 1)}
-          className="h-8 w-8 items-center justify-center rounded-lg active:opacity-70"
-        >
-          <Icon
-            as={Plus}
-            size="sm"
-            className="text-typography-700 dark:text-typography-200"
-          />
-        </Pressable>
-      </HStack>
+      <QtyStepper
+        qty={line.quantity}
+        onDecrement={() => onChangeQty(line.id, Math.max(1, line.quantity - 1))}
+        onIncrement={() => onChangeQty(line.id, line.quantity + 1)}
+        disableDecrement={line.quantity <= 1}
+      />
 
       <Pressable
         onPress={() => onRemove(line.id)}

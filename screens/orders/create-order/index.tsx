@@ -238,7 +238,7 @@ export function CreateOrderScreen() {
                 ))
               )}
 
-              <VStack className="mt-2 gap-3 border-t border-outline-200 pt-4">
+              <VStack className="mt-2 gap-3 border-t border-outline-100 pt-4">
                 <HStack className="items-center justify-between">
                   <Text className={fieldLabelClass}>SUBTOTAL</Text>
                   <Text className="text-base font-bold text-typography-900 dark:text-typography-0">
@@ -253,7 +253,7 @@ export function CreateOrderScreen() {
                   <Input
                     size="md"
                     variant="outline"
-                    className="h-11 w-24 rounded-2xl border border-outline-200 bg-background-100 px-3 dark:border-outline-300 dark:bg-background-100"
+                    className="h-11 w-24 rounded-2xl border border-outline-100 bg-background-100 px-3 dark:border-outline-100 dark:bg-background-100"
                   >
                     <InputField
                       className="text-right text-sm font-bold text-typography-900 dark:text-typography-0"
@@ -300,7 +300,7 @@ export function CreateOrderScreen() {
                       'rounded-full px-5 py-2.5',
                       selected
                         ? 'border-0 bg-primary-500'
-                        : 'border border-outline-300 bg-transparent dark:border-outline-300'
+                        : 'border border-outline-100 bg-transparent dark:border-outline-100'
                     )}
                   >
                     <BadgeText
@@ -322,7 +322,7 @@ export function CreateOrderScreen() {
       </ScrollView>
 
       <Box
-        className="border-t border-outline-200 bg-app-page px-5 pt-3"
+        className="border-t border-outline-100 bg-app-page px-5 pt-3"
         style={{ paddingBottom: Math.max(12, insets.bottom) }}
       >
         <PlaceOrderBar

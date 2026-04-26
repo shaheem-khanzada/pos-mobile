@@ -46,6 +46,6 @@ export function buildProductFormInitialFromProduct(product: Product) {
       media: p.media.id,
       variants: p.variants ?? [],
     },
-    imagePreviewUri: p.media.thumbnailURL || null,
+    imagePreviewUri: p.media.url || null,
   };
 }

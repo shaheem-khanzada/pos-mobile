@@ -24,7 +24,7 @@ export function ProductListItem({
   categoryLabel,
   onPress,
 }: ProductListItemProps) {
-  const imageUrl = product.media.thumbnailURL;
+  const imageUrl = product.media.url;
   const hasImage = Boolean(imageUrl);
   const stock = product.inventory ?? 0;
   const price = product.priceInPKR ?? 0;

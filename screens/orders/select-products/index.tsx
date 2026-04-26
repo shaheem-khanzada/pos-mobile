@@ -14,11 +14,9 @@ import { Text } from '@/components/ui/text';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import {
   BottomSheet,
-  BottomSheetBackdrop,
-  BottomSheetDragIndicator,
-  BottomSheetPortal,
   useBottomSheetContext,
 } from '@/components/ui/bottomsheet';
+import { BotomSheetWrapper } from '@/components/app-bottom-sheet';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
@@ -210,7 +208,7 @@ function SelectProductsMain({
           <HStack
             className={cn(
               'items-center justify-between gap-3 rounded-3xl border border-primary-300 bg-primary-50/40 p-4',
-              'dark:border-primary-700 dark:bg-primary-950/20'
+              ''
             )}
           >
             <Box className="h-12 w-12 items-center justify-center rounded-xl bg-primary-500">
@@ -264,18 +262,6 @@ function SelectProductsMain({
     setSearch(scannedBarcode);
     clearScannedBarcode();
   }, [clearScannedBarcode, scannedBarcode]);
-
-  const backdropComponent = useCallback(
-    (props: object) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={1}
-        className="bg-black/50"
-      />
-    ),
-    []
-  );
 
   return (
     <SafeAreaView
@@ -336,7 +322,7 @@ function SelectProductsMain({
       </VStack>
 
       <Box
-        className="border-t border-outline-200 bg-app-page px-5 pt-3"
+        className="border-t border-outline-100 bg-app-page px-5 pt-3"
         style={{ paddingBottom: Math.max(12, insets.bottom) }}
       >
         <PlaceOrderBar
@@ -348,13 +334,10 @@ function SelectProductsMain({
         />
       </Box>
 
-      <BottomSheetPortal
-        snapPoints={['55%', '90%']}
-        backdropComponent={backdropComponent}
+      <BotomSheetWrapper
+        snapPoints={['28%', '88%']}
         enablePanDownToClose
-        handleComponent={() => (
-          <BottomSheetDragIndicator className="bg-app-surface" />
-        )}
+        enableDynamicSizing
       >
         {sheetMode === 'variant' && variantSheetProduct ? (
           <SelectProductVariantSheetContent
@@ -377,7 +360,7 @@ function SelectProductsMain({
             onClearAll={clearAllCartItems}
           />
         ) : null}
-      </BottomSheetPortal>
+      </BotomSheetWrapper>
     </SafeAreaView>
   );
 }

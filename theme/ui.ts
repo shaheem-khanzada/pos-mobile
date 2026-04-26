@@ -18,19 +18,19 @@ const pillInputFocusClass = cn(
 
 /** Single-line fields — matches login pill height (`h-14`) */
 export const standardInputClass = cn(
-  'h-14 rounded-3xl border border-outline-200 bg-app-surface px-4 dark:border-outline-300',
+  'h-14 rounded-3xl border border-outline-100 bg-app-surface px-4 dark:border-outline-100',
   pillInputFocusClass
 );
 
 /** Auth inputs with leading/trailing slots — no horizontal padding on root */
 export const authInputClass = cn(
-  'h-14 rounded-3xl border border-outline-200 bg-app-surface dark:border-outline-300',
+  'h-14 rounded-3xl border border-outline-100 bg-app-surface dark:border-outline-100',
   pillInputFocusClass
 );
 
 /** Multiline description — apply on `Textarea` root (receives `data-[focus=true]`) */
 export const fieldShellClass = cn(
-  'rounded-2xl border border-outline-200 bg-app-surface px-4 py-2 dark:border-outline-300',
+  'rounded-2xl border border-outline-100 bg-app-surface px-4 py-2 dark:border-outline-100',
   pillInputFocusClass
 );
 
@@ -40,7 +40,7 @@ export const inputTextClass = cn('text-sm font-bold text-typography-900');
 /** Border / fill / shadow shared by variation rows and primary actions (e.g. Save product) */
 export const variationCardSurfaceClass = cn(
   'rounded-3xl border border-outline-100 bg-app-surface shadow-card-faint',
-  'dark:border-outline-200 dark:shadow-card-faint'
+  'dark:border-outline-100 dark:shadow-card-faint'
 );
 
 /** Category / variant pill — container (`rounded-3xl` matches variation cards) */
@@ -49,7 +49,7 @@ export function pillChipContainerClassNames(selected: boolean) {
     'items-center overflow-hidden rounded-3xl border',
     selected
       ? 'border-primary-200 bg-app-pill-active-bg dark:border-primary-500/30'
-      : 'border-outline-200 bg-app-surface dark:border-outline-300 dark:bg-app-surface'
+      : 'border-outline-100 bg-app-surface dark:border-outline-100 dark:bg-app-surface'
   );
 }
 
@@ -77,7 +77,7 @@ export const variationChipTextClass = cn(
 );
 
 export const variationNeutralChipClass = cn(
-  'rounded-3xl border border-outline-200 bg-background-100 px-2 py-1',
+  'rounded-3xl border border-outline-100 bg-background-100 px-2 py-1',
   'dark:border-outline-700 dark:bg-background-100'
 );
 

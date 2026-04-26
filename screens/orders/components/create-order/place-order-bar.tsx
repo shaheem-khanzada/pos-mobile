@@ -43,8 +43,8 @@ export function PlaceOrderBar({
       className={cn(
         'items-center justify-between gap-3 rounded-full border px-3 py-2.5',
         isDark
-          ? 'border-outline-200 bg-secondary-100'
-          : 'border-outline-200 bg-app-surface',
+          ? 'border-outline-100 bg-secondary-100'
+          : 'border-outline-100 bg-app-surface',
         className
       )}
     >

@@ -98,7 +98,7 @@ export function OrdersListScreen() {
 
           <Pressable
             onPress={() => router.push('/tabs/create-order')}
-            className="h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 active:opacity-90 dark:bg-primary-900/40"
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-primary-100 active:opacity-90"
           >
             <Icon as={Plus} size="md" className="text-emerald-500" />
           </Pressable>

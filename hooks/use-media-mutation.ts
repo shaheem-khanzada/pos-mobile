@@ -10,13 +10,23 @@ export type UploadableFile = {
   type: string;
 };
 
+function withTimestampFileName(fileName: string): string {
+  const safeName = fileName.trim() || 'upload.jpg';
+  const dotIndex = safeName.lastIndexOf('.');
+  const hasExtension = dotIndex > 0 && dotIndex < safeName.length - 1;
+  const base = hasExtension ? safeName.slice(0, dotIndex) : safeName;
+  const ext = hasExtension ? safeName.slice(dotIndex) : '';
+  return `${base}-${Date.now()}${ext}`;
+}
+
 async function uploadMediaFile(file: UploadableFile, alt: string): Promise<string> {
+  const uniqueName = withTimestampFileName(file.name);
   const formData = new FormData();
   formData.append('_payload', JSON.stringify({ alt }));
   formData.append('alt', alt);
   formData.append('file', {
     uri: file.uri,
-    name: file.name,
+    name: uniqueName,
     type: file.type,
   } as unknown as Blob);
 

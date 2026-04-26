@@ -79,7 +79,7 @@ export default function ForgotPasswordScreen() {
         </Box>
 
         {succeeded ? (
-          <Box className="rounded-md border border-outline-200 bg-background-50 px-3 py-3">
+          <Box className="rounded-md border border-outline-100 bg-background-50 px-3 py-3">
             <Text size="sm" className="text-typography-700">
               If an account exists for that email, you will receive instructions shortly.
               Open the link on this device to finish on the reset password screen.
