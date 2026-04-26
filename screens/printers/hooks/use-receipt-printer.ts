@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
 import type { Cart } from '@/payload/types';
 import { printOrderReceipt } from '@/screens/printers/utils/print-order-receipt';
 import { usePrinterStore } from '@/screens/printers/store';
+import { setToast } from '@/toast/store';
 
 export function useReceiptPrinter() {
   const [printingKey, setPrintingKey] = useState<string | null>(null);
@@ -11,10 +11,11 @@ export function useReceiptPrinter() {
 
   const printCart = useCallback(async (cart: Cart, key: string) => {
     if (!usePrinterStore.getState().defaultPrinter) {
-      Alert.alert(
-        'No printer',
-        'Choose a receipt printer under Profile → Manage Printers.'
-      );
+      setToast({
+        variant: 'warning',
+        title: 'No printer',
+        description: 'Choose a receipt printer under Profile → Manage Printers.',
+      });
       return false;
     }
     setPrintingKey(key);

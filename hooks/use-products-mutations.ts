@@ -25,9 +25,11 @@ export function useProductsListQuery(params?: { limit?: number; sort?: string })
       return page;
     },
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
-    /** Flat list for UI; cache still holds paginated pages (for `getNextPageParam` / `fetchNextPage`). */
     select: (data) =>
-      data.pages.flatMap((page) => page.docs ?? []) as Product[],
+      data.pages.flatMap((page) => page.docs?.map((doc) => ({
+        ...doc,
+        variants: doc.variants?.docs ?? [],
+      })) ?? []) as Product[],
   });
 }
 
@@ -35,16 +37,19 @@ export function useProductByIdQuery(id: string | undefined) {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const res = await payloadSdk.find({
+      const res = await payloadSdk.findByID({
         collection: 'products',
-        where: { id: { equals: id! } },
-        limit: 1,
+        id: id!,
         depth: 2,
       });
-      const doc = res.docs?.[0];
-      if (!doc) throw new Error('Product not found');
+      const doc = res;
+      if (!doc) {
+        showApiErrorToast('Load product', new Error('Product not found'));
+        throw new Error('Product not found');
+      }
       return doc;
     },
+    select: (data) => ({ ...data, variants: data.variants?.docs ?? [] }) as Product,
     enabled: Boolean(id),
   });
 }

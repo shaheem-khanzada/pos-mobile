@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { payloadSdk } from '@/payload/sdk';
+import { Cart } from '@/payload/types';
 
 function localCalendarDayKey(d = new Date()): string {
   const y = d.getFullYear();
@@ -40,7 +41,7 @@ export function useActiveCartsTodayCountQuery() {
 
 /** Infinite list of `carts`; each page’s `docs` are normalized to `Cart` in `queryFn`. */
 export function useCartsListQuery(params?: { limit?: number; sort?: string }) {
-  const limit = params?.limit ?? 20;
+  const limit = params?.limit ?? 100;
   return useInfiniteQuery({
     queryKey: ['carts', { limit, sort: params?.sort }],
     initialPageParam: 1,
@@ -58,5 +59,6 @@ export function useCartsListQuery(params?: { limit?: number; sort?: string }) {
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
+    select: (data) => data.pages.flatMap((page) => page.docs ?? []) as Cart[],
   });
 }

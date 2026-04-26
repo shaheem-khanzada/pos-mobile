@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Moon, Plus, Search, Sun } from 'lucide-react-native';
@@ -17,6 +16,7 @@ import { cn } from '@/lib/cn';
 import { useActiveCartsTodayCountQuery, useCartsListQuery } from '@/hooks/use-carts-queries';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
 import { useReceiptPrinter } from '@/screens/printers/hooks/use-receipt-printer';
+import { setToast } from '@/toast/store';
 import { OrderListItem } from '@/screens/orders/components/orders-list/order-list-item';
 import { mapCartToOrderListItem } from './map-cart-to-order-list-item';
 import type { OrderListItem as OrderListEntry } from './types';
@@ -26,12 +26,11 @@ export function OrdersListScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const [searchText, setSearchText] = useState('');
   const { printCart, printingKey } = useReceiptPrinter();
-  const cartsQuery = useCartsListQuery({ limit: 30, sort: '-createdAt' });
+  const { data: carts } = useCartsListQuery({ limit: 30, sort: '-createdAt' });
   const activeTodayCountQuery = useActiveCartsTodayCountQuery();
-  const carts = cartsQuery.data?.pages.flatMap((page) => page.docs ?? []) ?? [];
 
   const orders = useMemo(
-    () => carts.map((cart) => mapCartToOrderListItem(cart)),
+    () => carts?.map((cart) => mapCartToOrderListItem(cart)) ?? [],
     [carts]
   );
 
@@ -52,12 +51,13 @@ export function OrdersListScreen() {
 
   const handlePrint = useCallback(
     async (order: OrderListEntry) => {
-      const cart = carts.find((c) => c.id === order.id);
+      const cart = carts?.find((c) => c.id === order.id);
       if (!cart) {
-        Alert.alert(
-          'Print',
-          'Order data is not available. Pull to refresh and try again.'
-        );
+        setToast({
+          variant: 'warning',
+          title: 'Print',
+          description: 'Order data is not available. Pull to refresh and try again.',
+        });
         return;
       }
       await printCart(cart, order.id);

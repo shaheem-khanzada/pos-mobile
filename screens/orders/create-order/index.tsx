@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert } from 'react-native';
 import { ArrowLeft, Phone, Sun, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +23,7 @@ import {
   variationCardSurfaceClass,
 } from '@/theme/ui';
 import { useCreateCartMutation } from '@/hooks/use-carts-mutations';
+import { setToast } from '@/toast/store';
 import { CartItemRow } from '@/screens/orders/components/create-order/cart-item';
 import { PlaceOrderBar } from '@/screens/orders/components/create-order/place-order-bar';
 import { cartItemListKey } from '@/screens/orders/types';
@@ -75,7 +75,11 @@ export function CreateOrderScreen() {
 
   const onPlaceOrder = useCallback(async () => {
     if (cartItems.length === 0) {
-      Alert.alert('No items', 'Add at least one product before placing the order.');
+      setToast({
+        variant: 'warning',
+        title: 'No items',
+        description: 'Add at least one product before placing the order.',
+      });
       return;
     }
 
@@ -96,7 +100,11 @@ export function CreateOrderScreen() {
       router.back();
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Could not place order.';
-      Alert.alert('Order failed', message);
+      setToast({
+        variant: 'error',
+        title: 'Order failed',
+        description: message,
+      });
     }
   }, [
     createCartMutation,

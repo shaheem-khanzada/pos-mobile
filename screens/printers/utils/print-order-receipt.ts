@@ -1,10 +1,9 @@
-import { Alert } from 'react-native';
-
 import type { Cart, CartItem } from '@/payload/types';
 import { formatRs } from '@/lib/format-rs';
 import { cartOrderNumberLabel } from '@/screens/orders/orders-list/map-cart-to-order-list-item';
 import { cartItemTitle, cartItemUnitPrice } from '@/screens/orders/types';
 import { usePrinterStore } from '@/screens/printers/store';
+import { setToast } from '@/toast/store';
 import { printBleReceipt } from './ble-printer';
 const RECEIPT_WIDTH = 32;
 const SHOP_NAME = 'POSH STORE';
@@ -108,10 +107,11 @@ function wrapTextLines(text: string, width: number): string[] {
 export async function printOrderReceipt(cart: Cart): Promise<void> {
   const saved = usePrinterStore.getState().defaultPrinter;
   if (!saved) {
-    Alert.alert(
-      'No printer',
-      'Choose a receipt printer under Profile → Manage Printers.'
-    );
+    setToast({
+      variant: 'warning',
+      title: 'No printer',
+      description: 'Choose a receipt printer under Profile → Manage Printers.',
+    });
     return;
   }
 
@@ -120,7 +120,11 @@ export async function printOrderReceipt(cart: Cart): Promise<void> {
     await printBleReceipt(saved.id, body);
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    Alert.alert('Print failed', message);
+    setToast({
+      variant: 'error',
+      title: 'Print failed',
+      description: message,
+    });
     throw e;
   }
 }

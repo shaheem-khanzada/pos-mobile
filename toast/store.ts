@@ -1,43 +1,29 @@
-import { create } from 'zustand';
-
 export type ToastVariant = 'error' | 'success' | 'warning' | 'info';
 
 export type Toast = {
-  id: number;
   variant: ToastVariant;
   title: string;
   description?: string;
   durationMs?: number;
 };
 
-type ToastStore = {
-  toast: Toast | null;
-  sequence: number;
-  setToast: (input: Omit<Toast, 'id'>) => void;
-  clearToast: () => void;
-};
+import ToastMessage from 'react-native-toast-message';
 
-export const useToastStore = create<ToastStore>((set, get) => ({
-  toast: null,
-  sequence: 0,
-  setToast: (input) => {
-    const nextId = get().sequence + 1;
-    set({
-      sequence: nextId,
-      toast: {
-        id: nextId,
-        ...input,
-      },
-    });
-  },
-  clearToast: () => set({ toast: null }),
-}));
-
-export function setToast(input: Omit<Toast, 'id'>) {
-  useToastStore.getState().setToast(input);
+export function setToast(input: Toast) {
+  ToastMessage.show({
+    type: 'appToast',
+    text1: input.title,
+    text2: input.description,
+    position: 'top',
+    topOffset: 16,
+    visibilityTime: input.durationMs ?? 3200,
+    autoHide: true,
+    props: {
+      variant: input.variant,
+    },
+  });
 }
 
 export function clearToast() {
-  useToastStore.getState().clearToast();
+  ToastMessage.hide();
 }
-

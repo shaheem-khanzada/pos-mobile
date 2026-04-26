@@ -30,6 +30,7 @@ export function AddedVariationsSection({
   onPressVariant,
   canCreateNew = true,
 }: AddedVariationsSectionProps) {
+  console.log('items AddedVariationsSection', items);
   return (
     <VStack space="lg" className="w-full">
       <HStack className="w-full items-center justify-between">
