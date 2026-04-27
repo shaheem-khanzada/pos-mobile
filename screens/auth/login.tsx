@@ -37,8 +37,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const { isReady, isSignedIn } = useAuth();
   const loginMutation = useLoginMutation();
-  const [email, setEmail] = useState('admin@gmail.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);

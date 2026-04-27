@@ -1,4 +1,5 @@
 import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ToastMessage from 'react-native-toast-message';
 import { Pressable } from '@/components/ui/pressable';
 import { HStack } from '@/components/ui/hstack';
@@ -33,10 +34,12 @@ const visualByKind: Record<ToastVariant, VariantVisual> = {
 };
 
 export function AppToast() {
+  const insets = useSafeAreaInsets();
+
   return (
     <ToastMessage
       position="top"
-      topOffset={16}
+      topOffset={Math.max(16, insets.top + 8)}
       config={{
         appToast: ({ text1, text2, props }: any) => {
           const variant = (props?.variant as ToastVariant) ?? 'error';

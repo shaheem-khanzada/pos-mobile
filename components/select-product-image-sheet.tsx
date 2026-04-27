@@ -17,6 +17,7 @@ import { cn } from '@/lib/cn';
 import { useMediaListQuery } from '@/hooks/use-media-mutation';
 import type { Media } from '@/payload/types';
 import { fieldLabelClass } from '@/theme/ui';
+import { setToast } from '@/toast/store';
 
 /** Re-export so screens can place a trigger inside scroll content while the portal stays screen-level. */
 export { BottomSheetTrigger } from '@/components/ui/bottomsheet';
@@ -73,7 +74,14 @@ export function SelectProductImageSheet({
 
   const pickFromLibrary = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    if (!permission.granted) {
+      setToast({
+        variant: 'warning',
+        title: 'Photos permission needed',
+        description: 'Allow Photos access in Android settings to upload an image.',
+      });
+      return;
+    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -94,7 +102,14 @@ export function SelectProductImageSheet({
 
   const takePhoto = useCallback(async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) return;
+    if (!permission.granted) {
+      setToast({
+        variant: 'warning',
+        title: 'Camera permission needed',
+        description: 'Allow Camera access in Android settings to capture a photo.',
+      });
+      return;
+    }
 
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,

@@ -1,7 +1,7 @@
 import type { Cart, CartItem } from '@/payload/types';
 import { formatRs } from '@/lib/format-rs';
 import { cartOrderNumberLabel } from '@/screens/orders/orders-list/map-cart-to-order-list-item';
-import { cartItemTitle, cartItemUnitPrice } from '@/screens/orders/types';
+import { cartItemUnitPrice } from '@/screens/orders/types';
 import { usePrinterStore } from '@/screens/printers/store';
 import { setToast } from '@/toast/store';
 import { printBleReceipt } from './ble-printer';
@@ -16,7 +16,7 @@ function paymentLabel(method: Cart['paymentMethod']): string {
 
 function lineLabel(item: CartItem): string {
   try {
-    return cartItemTitle(item);
+    return item.variant?.title ?? item.product.title;
   } catch {
     return 'Item';
   }

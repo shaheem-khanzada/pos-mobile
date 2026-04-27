@@ -9,6 +9,17 @@ import type { Product } from '@/payload/types';
 import { payloadSdk } from '@/payload/sdk';
 import { showApiErrorToast } from '@/toast/api-toast';
 
+function excludeKeys<T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  keys: readonly K[]
+): Omit<T, K> {
+  const next = { ...obj };
+  for (const key of keys) {
+    delete next[key];
+  }
+  return next;
+}
+
 export function useProductsListQuery(params?: { limit?: number; sort?: string }) {
   const limit = params?.limit ?? 10;
   return useInfiniteQuery({
@@ -76,6 +87,7 @@ export function useCreateProductMutation() {
   return useMutation({
     mutationFn: async (input: { product: Partial<Product> }) => {
       const { variantTypes: _variantTypes, ...productPayload } = input.product;
+      console.log('productPayload', productPayload);
       const result = await payloadSdk.create({
         collection: 'products',
         data: productPayload as never,
@@ -112,10 +124,12 @@ export function useEditProductMutation() {
       id: string;
       product: Partial<Product>;
     }) => {
+      const productPayload = excludeKeys(input.product, ['variantTypes']);
+      console.log('productPayload update', productPayload);
       return payloadSdk.update({
         collection: 'products',
         id: input.id,
-        data: input.product as never,
+        data: productPayload as never,
       });
     },
     onMutate: async (input) => {

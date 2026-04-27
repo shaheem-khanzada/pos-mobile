@@ -12,9 +12,9 @@ export function useCreateVariantMutation() {
         collection: 'variants',
         data: data,
       }),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['variants'] });
+      queryClient.invalidateQueries({ queryKey: ['product', vars.product] });
     },
     onError: (error) => {
       showApiErrorToast('Create variant', error);
@@ -31,9 +31,9 @@ export function useEditVariantMutation() {
         id,
         data: data,
       }),
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['variants'] });
+      queryClient.invalidateQueries({ queryKey: ['product', vars.data.product] });
     },
     onError: (error) => {
       showApiErrorToast('Update variant', error);

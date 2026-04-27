@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { ArrowLeft, ChevronRight, ScanLine, Search, ShoppingCart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useBarcode } from '@/screens/barcode/hooks/use-barcode';
@@ -141,16 +142,24 @@ function SelectProductsMain({
     (product: CatalogProduct) => {
       setSheetMode('variant');
       setVariantSheetProduct(product);
-      requestAnimationFrame(() => handleOpen());
     },
-    [handleOpen, setSheetMode, setVariantSheetProduct]
+    [setSheetMode, setVariantSheetProduct]
   );
 
   const openSelectionSheet = useCallback(() => {
     setSheetMode('selection');
     setVariantSheetProduct(null);
-    requestAnimationFrame(() => handleOpen());
-  }, [handleOpen, setSheetMode, setVariantSheetProduct]);
+  }, [setSheetMode, setVariantSheetProduct]);
+
+  useEffect(() => {
+    if (sheetMode === 'selection') {
+      requestAnimationFrame(() => handleOpen());
+      return;
+    }
+    if (sheetMode === 'variant' && variantSheetProduct) {
+      requestAnimationFrame(() => handleOpen());
+    }
+  }, [handleOpen, sheetMode, variantSheetProduct]);
 
   const adjustLineQty = useCallback(
     (lineId: string, delta: number) => {
@@ -289,36 +298,39 @@ function SelectProductsMain({
           </Pressable>
         </HStack>
 
-        <FlatList
-          ref={listRef}
-          data={filteredCatalog}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={header}
-          renderItem={renderItem}
-          ListEmptyComponent={
-            productsQuery.isPending ? (
-              <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
-                Loading products…
-              </Text>
-            ) : productsQuery.isError ? (
-              <Text className="py-8 text-center text-sm text-error-500">
-                Could not load products.
-              </Text>
-            ) : search.trim() ? (
-              <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
-                No products match your search.
-              </Text>
-            ) : (
-              <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
-                No products yet.
-              </Text>
-            )
-          }
-          contentContainerClassName="grow gap-3 pb-4"
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        />
+        {productsQuery.isPending ? (
+          <VStack className="flex-1 items-center justify-center gap-3">
+            <ActivityIndicator size="small" />
+            <Text className="text-sm text-typography-500">Loading products...</Text>
+          </VStack>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={filteredCatalog}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={header}
+            renderItem={renderItem}
+            ListEmptyComponent={
+              productsQuery.isError ? (
+                <Text className="py-8 text-center text-sm text-error-500">
+                  Could not load products.
+                </Text>
+              ) : search.trim() ? (
+                <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
+                  No products match your search.
+                </Text>
+              ) : (
+                <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
+                  No products yet.
+                </Text>
+              )
+            }
+            contentContainerClassName="grow gap-3 pb-4"
+            className="flex-1"
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+          />
+        )}
       </VStack>
 
       <Box

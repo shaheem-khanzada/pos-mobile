@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "starter-kit-expo",
+    "name": "easypos",
     "slug": "starter-kit-expo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "starterkitexpo",
+    "scheme": "easypos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -21,7 +21,9 @@
         "NSBluetoothAlwaysUsageDescription": "$(PRODUCT_NAME) uses Bluetooth to discover and print to nearby receipt printers.",
         "NSBluetoothPeripheralUsageDescription": "$(PRODUCT_NAME) uses Bluetooth to discover and print to nearby receipt printers.",
         "NSLocalNetworkUsageDescription": "$(PRODUCT_NAME) uses the local network to discover printers on Wi‑Fi or Ethernet.",
-        "UISupportedExternalAccessoryProtocols": ["com.epson.escpos"]
+        "UISupportedExternalAccessoryProtocols": [
+          "com.epson.escpos"
+        ]
       },
       "bundleIdentifier": "com.anonymous.posh"
     },
@@ -40,6 +42,7 @@
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_MEDIA_IMAGES",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
@@ -65,7 +68,11 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-asset",
+      "expo-camera",
+      "expo-image-picker"
     ],
     "experiments": {
       "typedRoutes": true

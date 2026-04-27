@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Moon, Plus, Search, Sun } from 'lucide-react-native';
@@ -117,22 +118,28 @@ export function ProductListScreen() {
           </HStack>
 
           <Box className="flex-1">
-            <FlatList
-              data={filteredProducts}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{
-                gap: 12,
-                paddingBottom: 24,
-              }}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <ProductListItem
-                  product={item}
-                  categoryLabel={getCategoryLabel(item.categories)}
-                  onPress={handleOpenProduct}
-                />
-              )}
-              ListEmptyComponent={
+            {productsQuery.isPending ? (
+              <VStack className="flex-1 items-center justify-center gap-3">
+                <ActivityIndicator size="small" />
+                <Text className="text-sm text-typography-500">Loading products...</Text>
+              </VStack>
+            ) : (
+              <FlatList
+                data={filteredProducts}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{
+                  gap: 12,
+                  paddingBottom: 24,
+                }}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <ProductListItem
+                    product={item}
+                    categoryLabel={getCategoryLabel(item.categories)}
+                    onPress={handleOpenProduct}
+                  />
+                )}
+                ListEmptyComponent={
                 <Card
                   className={cn(
                     'rounded-2xl border border-outline-100 bg-background-0 p-4',
@@ -145,8 +152,9 @@ export function ProductListScreen() {
                       : 'No products yet.'}
                   </Text>
                 </Card>
-              }
-            />
+                }
+              />
+            )}
           </Box>
         </VStack>
       </VStack>

@@ -7,6 +7,7 @@ import {
 } from '@/screens/auth/stores/auth-store';
 import { showApiErrorToast } from '@/toast/api-toast';
 import { User } from '@/payload/types';
+import { relationId } from '../form-payload';
 
 /** Sign in with email/password; persists JWT + user then navigates to tabs. */
 export function useLoginMutation() {
@@ -20,8 +21,8 @@ export function useLoginMutation() {
       });
       const token = result.token;
       const tenants = result.user?.tenants ?? [];
-      const tenantId = tenants[0]?.id ?? null;
-      
+      const tenantId = relationId(tenants[0]?.tenant) ?? null;
+      console.log('tenantId', tenantId);
       if (!token) {
         throw new Error('Login succeeded but the server did not return a token.');
       }

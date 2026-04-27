@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Moon, Plus, Search, Sun } from 'lucide-react-native';
@@ -26,7 +27,8 @@ export function OrdersListScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const [searchText, setSearchText] = useState('');
   const { printCart, printingKey } = useReceiptPrinter();
-  const { data: carts } = useCartsListQuery({ limit: 30, sort: '-createdAt' });
+  const cartsQuery = useCartsListQuery({ limit: 30, sort: '-createdAt' });
+  const carts = cartsQuery.data;
   const activeTodayCountQuery = useActiveCartsTodayCountQuery();
 
   const orders = useMemo(
@@ -135,22 +137,28 @@ export function OrdersListScreen() {
           </HStack>
 
           <Box className="flex-1">
-            <FlatList
-              data={filteredOrders}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{
-                gap: 12,
-                paddingBottom: 24,
-              }}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <OrderListItem
-                  order={item}
-                  onPrint={handlePrint}
-                  isPrinting={printingKey === item.id}
-                />
-              )}
-              ListEmptyComponent={
+            {cartsQuery.isPending ? (
+              <VStack className="flex-1 items-center justify-center gap-3">
+                <ActivityIndicator size="small" />
+                <Text className="text-sm text-typography-500">Loading orders...</Text>
+              </VStack>
+            ) : (
+              <FlatList
+                data={filteredOrders}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{
+                  gap: 12,
+                  paddingBottom: 24,
+                }}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <OrderListItem
+                    order={item}
+                    onPrint={handlePrint}
+                    isPrinting={printingKey === item.id}
+                  />
+                )}
+                ListEmptyComponent={
                 <Card
                   className={cn(
                     'rounded-2xl border border-outline-100 bg-background-0 p-4',
@@ -163,8 +171,9 @@ export function OrdersListScreen() {
                       : 'No orders yet.'}
                   </Text>
                 </Card>
-              }
-            />
+                }
+              />
+            )}
           </Box>
         </VStack>
       </VStack>

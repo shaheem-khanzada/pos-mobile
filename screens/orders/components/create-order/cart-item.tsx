@@ -9,7 +9,7 @@ import { QtyStepper } from '@/components/orders/qty-stepper';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import type { CartItem } from '@/payload/types';
-import { cartItemTitle, cartItemUnitPrice } from '@/screens/orders/types';
+import { cartItemUnitPrice } from '@/screens/orders/types';
 
 type CartItemRowProps = {
   line: CartItem;
@@ -50,7 +50,7 @@ export function CartItemRow({
           className="text-base font-bold text-typography-900 dark:text-typography-0"
           numberOfLines={2}
         >
-          {cartItemTitle(line)}
+          {line.variant?.title}
         </Text>
         <Text className="text-sm text-secondary-500 dark:text-typography-400">
           {formatRs(unit)} × {line.quantity}

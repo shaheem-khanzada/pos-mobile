@@ -43,7 +43,7 @@ const bottomSheetItemStyle = tva({
 
 const BottomSheetContext = createContext<{
   visible: boolean;
-  bottomSheetRef: React.RefObject<GorhomBottomSheet>;
+  bottomSheetRef: React.RefObject<GorhomBottomSheet | null>;
   handleClose: () => void;
   handleOpen: () => void;
 }>({
@@ -114,7 +114,7 @@ export const BottomSheetPortal = ({
 
   const handleSheetChanges = useCallback(
     (index: number) => {
-      if (index === 0 || index === -1) {
+      if (index === -1) {
         handleClose();
       }
     },

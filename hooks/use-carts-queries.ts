@@ -29,7 +29,6 @@ export function useActiveCartsTodayCountQuery() {
         collection: 'carts',
         where: {
           and: [
-            { status: { equals: 'active' } },
             { createdAt: { greater_than_equal: startOfLocalDayIso() } },
           ],
         },

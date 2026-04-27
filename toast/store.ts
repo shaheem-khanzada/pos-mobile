@@ -15,7 +15,6 @@ export function setToast(input: Toast) {
     text1: input.title,
     text2: input.description,
     position: 'top',
-    topOffset: 16,
     visibilityTime: input.durationMs ?? 3200,
     autoHide: true,
     props: {

@@ -9,10 +9,10 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
-import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
+import { Select } from '@/components/select';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import {
@@ -32,7 +32,6 @@ import { Cart } from '@/payload/types';
 
 const PAYMENT_OPTIONS = [
   { id: 'cash' as const, label: 'CASH' },
-  { id: 'card' as const, label: 'CARD' },
   { id: 'online' as const, label: 'ONLINE' },
 ];
 
@@ -87,7 +86,7 @@ export function CreateOrderScreen() {
       customerName: fullName.trim() || 'Guest',
       customerPhone: phone.trim() || null,
       paymentMethod: paymentMethod,
-      items: cartItems,
+      items: cartItems.map(({ id: _id, ...item }) => item) as never,
       subtotal: total,
       currency: 'PKR',
       status: 'purchased',
@@ -207,6 +206,20 @@ export function CreateOrderScreen() {
           </VStack>
         </VStack>
 
+        <VStack space="md" className="w-full">
+          <Select.Provider
+            items={PAYMENT_OPTIONS}
+            title="PAYMENT METHOD"
+            selectedId={paymentMethod}
+            onSelect={(id) => setPaymentMethod(id as Cart['paymentMethod'])}
+          >
+            <Select.Frame>
+              <Select.Header />
+              <Select.List />
+            </Select.Frame>
+          </Select.Provider>
+        </VStack>
+
         <Box
           className="w-full"
           onLayout={(e) => {
@@ -274,51 +287,6 @@ export function CreateOrderScreen() {
             </VStack>
           </VStack>
         </Box>
-
-        <VStack space="md" className="w-full">
-          <Text className={fieldLabelClass}>PAYMENT METHOD</Text>
-          <HStack
-            className={cn(
-              'flex-wrap gap-3',
-              variationCardSurfaceClass,
-              'p-4'
-            )}
-          >
-            {PAYMENT_OPTIONS.map(({ id, label }) => {
-              const selected = paymentMethod === id;
-              return (
-                <Pressable
-                  key={id}
-                  onPress={() => setPaymentMethod(id)}
-                  className="active:opacity-90"
-                >
-                  <Badge
-                    action="muted"
-                    variant="outline"
-                    size="lg"
-                    className={cn(
-                      'rounded-full px-5 py-2.5',
-                      selected
-                        ? 'border-0 bg-primary-500'
-                        : 'border border-outline-100 bg-transparent dark:border-outline-100'
-                    )}
-                  >
-                    <BadgeText
-                      className={cn(
-                        'text-xs font-bold',
-                        selected
-                          ? 'text-white'
-                          : 'text-secondary-500 dark:text-typography-400'
-                      )}
-                    >
-                      {label}
-                    </BadgeText>
-                  </Badge>
-                </Pressable>
-              );
-            })}
-          </HStack>
-        </VStack>
       </ScrollView>
 
       <Box
