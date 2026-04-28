@@ -4,7 +4,7 @@ import { sanitizedRaw } from '@nozbe/watermelondb/RawRecord';
 import type { Product as PayloadProduct, Variant as PayloadVariant } from '../types';
 
 import { buildProduct, buildVariant } from '../builder';
-import { database } from '../index';
+import { database } from '../db';
 import Product from '../model/Product';
 import ProductVariant from '../model/ProductVariant';
 import { isSoftDeleted } from '../utils';
@@ -46,7 +46,7 @@ async function buildVariantOperations(params: {
   );
 
   const updateVariantOps = variantsToUpdate.map((entry) => {
-    const variant = localById.get(entry.variant.id)!;
+      const variant = localById.get(entry.variant.id)!;
     return variant.prepareUpdate((row) => {
       Object.assign(row, buildVariant(entry.variant));
     });
@@ -74,6 +74,11 @@ export async function syncProductsFromApi(options?: { pageSize?: number }) {
   let productCount = 0;
   let variantCount = 0;
   let checkpointCursor = lastFetchedProducts;
+
+  console.info('[db-sync][products] start', {
+    pageSize,
+    runCursor,
+  });
 
   while (hasNext) {
     const { docs: pageDocs, hasNext: nextPage } = await fetchProducts({
@@ -160,6 +165,17 @@ export async function syncProductsFromApi(options?: { pageSize?: number }) {
       setLastFetchedProducts(checkpointCursor);
     }
 
+    console.info('[db-sync][products] page', {
+      page,
+      fetched: pageDocs.length,
+      active: activeDocs.length,
+      deleted: deletedDocs.length,
+      productsTotal: productCount,
+      variantsTotal: variantCount,
+      checkpointCursor,
+      hasNext: nextPage,
+    });
+
     hasNext = nextPage;
     page += 1;
   }
@@ -168,6 +184,12 @@ export async function syncProductsFromApi(options?: { pageSize?: number }) {
     checkpointCursor = new Date().toISOString();
     setLastFetchedProducts(checkpointCursor);
   }
+
+  console.info('[db-sync][products] done', {
+    products: productCount,
+    variants: variantCount,
+    checkpointCursor,
+  });
 
   return {
     syncedAt: checkpointCursor,

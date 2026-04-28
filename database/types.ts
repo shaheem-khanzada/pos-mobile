@@ -5,6 +5,8 @@ export interface Tenant {
   createdAt: string;
 }
 
+export type SyncState = 'synced' | 'created' | 'updated' | 'deleted';
+
 export interface User {
   id: string;
   role: 'super-admin' | 'user';

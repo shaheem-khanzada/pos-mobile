@@ -1,6 +1,6 @@
 import { Model } from '@nozbe/watermelondb';
 import { children, date, field, text, json } from '@nozbe/watermelondb/decorators';
-import { Media } from '../types';
+import { Media, SyncState } from '../types';
 import { sanitizer } from '../utils';
 
 export default class Product extends Model {
@@ -21,6 +21,7 @@ export default class Product extends Model {
   @text('slug') slug!: string;
   @json('media', sanitizer) media!: Media | null;
   @text('tenant') tenant!: string | null;
+  @text('sync_state') syncState!: SyncState;
   @date('deleted_at') deletedAt!: Date | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;

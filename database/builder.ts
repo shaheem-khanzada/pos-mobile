@@ -14,6 +14,7 @@ export function buildOrder(order: Cart) {
     currency: order.currency ?? 'PKR',
     subtotal: order.subtotal ?? null,
     tenant: extractId((order.tenant)),
+    syncState: 'synced' as const,
     purchasedAt: order.purchasedAt
       ? asDate(order.purchasedAt)
       : asDate(order.createdAt, updatedAt),
@@ -38,6 +39,7 @@ export function buildProduct(product: Product) {
     slug: product.slug,
     media: product.media && typeof product.media !== 'string' ? product.media : null,
     tenant: extractId(product.tenant),
+    syncState: 'synced' as const,
     deletedAt: deletedAt ? new Date(deletedAt) : null,
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
@@ -56,6 +58,7 @@ export function buildVariant(
     priceInPKR: variant.priceInPKR ?? null,
     optionsJson: JSON.stringify(variant.options ?? []),
     tenant: extractId(variant.tenant),
+    syncState: 'synced' as const,
     deletedAt: null,
     createdAt: now,
     updatedAt: now,

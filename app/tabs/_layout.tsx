@@ -10,9 +10,11 @@ export const unstable_settings = {
 
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/hooks/auth/use-auth';
+import { useDatabaseSync } from '@/hooks/database/use-database-sync';
 
 export default function AppLayout() {
   const { isReady, isSignedIn } = useAuth();
+  useDatabaseSync({ pageSize: 100 });
 
   if (!isReady) {
     return null;

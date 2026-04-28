@@ -2,7 +2,7 @@ import { Q } from '@nozbe/watermelondb';
 import { sanitizedRaw } from '@nozbe/watermelondb/RawRecord';
 
 import { buildOrder } from '../builder';
-import { database } from '../index';
+import { database } from '../db';
 import Order from '../model/Order';
 import OrderItem from '../model/OrderItem';
 import { isSoftDeleted } from '../utils';
@@ -21,6 +21,11 @@ export async function syncOrdersFromApi(options?: { pageSize?: number }) {
   let deleted = 0;
   let upserted = 0;
   let checkpointCursor = lastFetchedOrders;
+
+  console.info('[db-sync][orders] start', {
+    pageSize,
+    runCursor,
+  });
 
   while (hasNext) {
     // 1) Pull one page from API
@@ -101,6 +106,17 @@ export async function syncOrdersFromApi(options?: { pageSize?: number }) {
       setLastFetchOrders(checkpointCursor);
     }
 
+    console.info('[db-sync][orders] page', {
+      page,
+      fetched: pageDocs.length,
+      active: activeDocs.length,
+      deleted: deletedDocs.length,
+      upsertedTotal: upserted,
+      deletedTotal: deleted,
+      checkpointCursor,
+      hasNext: nextPage,
+    });
+
     // 5) Go to next page if server has more
     hasNext = nextPage;
     page += 1;
@@ -109,5 +125,12 @@ export async function syncOrdersFromApi(options?: { pageSize?: number }) {
   if (!checkpointCursor) {
     setLastFetchOrders(new Date().toISOString());
   }
+
+  console.info('[db-sync][orders] done', {
+    upserted,
+    deleted,
+    checkpointCursor,
+  });
+
   return { upserted, deleted };
 }

@@ -1,5 +1,5 @@
 import { payloadSdk } from '@/payload/sdk';
-import type { Cart, Product } from '../types';
+import type { Cart, Product as PayloadProduct, Variant as PayloadVariant } from '../types';
 import { normalizeVariants } from '../utils';
 
 export async function fetchOrders(params: {
@@ -17,10 +17,10 @@ export async function fetchOrders(params: {
     sort: ['updatedAt', 'id'],
     where: cursor
       ? {
-        updatedAt: {
-          greater_than_equal: cursor,
-        },
-      }
+          updatedAt: {
+            greater_than_equal: cursor,
+          },
+        }
       : undefined,
   });
 
@@ -29,6 +29,12 @@ export async function fetchOrders(params: {
     hasNext: Boolean(res.nextPage),
   };
 }
+
+type ProductDoc = PayloadProduct & { variants?: PayloadVariant[] };
+type ProductListResponse = {
+  docs?: PayloadProduct[];
+  nextPage?: number | null;
+};
 
 export async function fetchProducts(params: {
   page: number;
@@ -50,12 +56,12 @@ export async function fetchProducts(params: {
           },
         }
       : undefined,
-  }));
+  })) as ProductListResponse;
 
   const docs = (res.docs ?? []).map((doc) => ({
     ...doc,
     variants: normalizeVariants(doc),
-  })) as Product[];
+  })) as ProductDoc[];
 
   return {
     docs,
