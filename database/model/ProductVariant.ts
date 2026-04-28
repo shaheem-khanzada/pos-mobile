@@ -17,6 +17,7 @@ export default class ProductVariant extends Model {
   @field('price_in_pkr_enabled') priceInPKREnabled!: boolean | null;
   @field('price_in_pkr') priceInPKR!: number | null;
   @text('options_json') optionsJson!: string | null;
+  @text('tenant') tenant!: string | null;
   @date('deleted_at') deletedAt!: Date | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;

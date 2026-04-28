@@ -20,6 +20,7 @@ export default class Product extends Model {
   @field('price_in_pkr') priceInPKR!: number | null;
   @text('slug') slug!: string;
   @json('media', sanitizer) media!: Media | null;
+  @text('tenant') tenant!: string | null;
   @date('deleted_at') deletedAt!: Date | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;

@@ -19,23 +19,27 @@ export interface Media {
   id: string;
   alt: string;
   url: string;
+  tenant?: string | Tenant;
 }
 
 export interface Category {
   id: string;
   title: string;
+  tenant?: string | Tenant;
 }
 
 export interface VariantType {
   id: string;
   label: string;
   name: string;
+  tenant?: string | Tenant;
 }
 
 export interface VariantOption {
   id: string;
   label: string;
   value: string;
+  tenant?: string | Tenant;
 }
 
 export type Variant = {
@@ -45,6 +49,7 @@ export type Variant = {
   inventory?: number | null;
   priceInPKR?: number | null;
   options?: VariantOption[] | string[];
+  tenant?: string | Tenant;
 };
 
 export interface Product {
@@ -54,6 +59,7 @@ export interface Product {
   description?: string | null;
   categories: Category[];
   media: Media;
+  tenant?: string | Tenant;
   inventory?: number | null;
   enableVariants?: boolean | null;
   variantTypes?: string[];
@@ -79,6 +85,7 @@ export interface Cart {
   purchasedAt?: string | null;
   subtotal?: number | null;
   currency?: 'PKR' | null;
+  tenant?: string | Tenant;
   customerName: string;
   customerPhone?: string | null;
   paymentMethod: 'cash' | 'online' | 'card';

@@ -16,6 +16,7 @@ export default class Order extends Model {
   @text('customer_phone') customerPhone!: string | null;
   @text('currency') currency!: Cart['currency'] | string | null;
   @field('subtotal') subtotal!: number | null;
+  @text('tenant') tenant!: string | null;
   @date('purchased_at') purchasedAt!: Date | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;

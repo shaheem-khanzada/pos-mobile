@@ -19,7 +19,11 @@ async function buildVariantOperations(params: {
   const { activeDocs, activeIds, variantsCollection } = params;
 
   const variantsToSync = activeDocs.flatMap((product) =>
-    (product.variants ?? []).map((variant) => ({ variant, productId: product.id }))
+    (product.variants ?? []).map((variant) => ({
+      variant,
+      productId: product.id,
+      tenant: (product as any).tenant ?? null,
+    }))
   );
   const remoteVariantIds = new Set(variantsToSync.map((entry) => entry.variant.id));
 
