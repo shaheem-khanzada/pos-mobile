@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { syncAllFromApi } from '@/database';
+import { syncAllFromApi, syncAllToApi } from '@/database';
 import { useAuthStore } from '@/screens/auth/stores/auth-store';
 
 type UseDatabaseSyncOptions = {
@@ -9,51 +9,70 @@ type UseDatabaseSyncOptions = {
   resumeThrottleMs?: number;
 };
 
+type SyncTrigger = 'startup' | 'resume';
+
 export function useDatabaseSync(options?: UseDatabaseSyncOptions) {
-  const token = useAuthStore((s) => s.token);
-  const tenantId = useAuthStore((s) => s.tenantId);
+  const authToken = useAuthStore((state) => state.token);
+  const currentTenantId = useAuthStore((state) => state.tenantId);
 
-  const pageSize = options?.pageSize ?? 100;
-  const resumeThrottleMs = options?.resumeThrottleMs ?? 2 * 60 * 1000;
+  const syncPageSize = options?.pageSize ?? 100;
+  const resumeSyncThrottleMs = options?.resumeThrottleMs ?? 2 * 60 * 1000;
 
-  const inFlightRef = useRef(false);
-  const lastRunAtRef = useRef(0);
+  const isSyncInFlightRef = useRef(false);
+  const lastSuccessfulSyncAtMsRef = useRef(0);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   useEffect(() => {
-    if (!token || !tenantId) return;
+    if (!authToken || !currentTenantId) return;
 
-    const runSync = async (reason: 'startup' | 'resume') => {
-      if (inFlightRef.current) return;
-      const now = Date.now();
-      if (reason === 'resume' && now - lastRunAtRef.current < resumeThrottleMs) {
+    const runPushThenPullSync = async (trigger: SyncTrigger) => {
+      if (isSyncInFlightRef.current) return;
+
+      const nowMs = Date.now();
+      const isResumeTrigger = trigger === 'resume';
+      if (
+        isResumeTrigger &&
+        nowMs - lastSuccessfulSyncAtMsRef.current < resumeSyncThrottleMs
+      ) {
         return;
       }
 
       try {
-        inFlightRef.current = true;
-        console.info('[db-sync] trigger', { reason, pageSize });
-        await syncAllFromApi({ pageSize });
-        lastRunAtRef.current = Date.now();
+        isSyncInFlightRef.current = true;
+        console.info('[db-sync] trigger', {
+          trigger,
+          pageSize: syncPageSize,
+          flow: 'push-then-pull',
+        });
+        await syncAllToApi();
+        await syncAllFromApi({ pageSize: syncPageSize });
+        lastSuccessfulSyncAtMsRef.current = Date.now();
       } catch (error) {
-        console.error('[db-sync] failed', { reason, error });
+        console.error('[db-sync] aborted', {
+          trigger,
+          error,
+          message: 'Push failed, skipped pull to avoid reconciliation issues.',
+        });
       } finally {
-        inFlightRef.current = false;
+        isSyncInFlightRef.current = false;
       }
     };
 
-    void runSync('startup');
+    runPushThenPullSync('startup');
 
-    const sub = AppState.addEventListener('change', (nextState) => {
-      const prev = appStateRef.current;
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      const previousState = appStateRef.current;
       appStateRef.current = nextState;
-      if ((prev === 'background' || prev === 'inactive') && nextState === 'active') {
-        void runSync('resume');
+      if (
+        (previousState === 'background' || previousState === 'inactive') &&
+        nextState === 'active'
+      ) {
+        runPushThenPullSync('resume');
       }
     });
 
     return () => {
-      sub.remove();
+      appStateSubscription.remove();
     };
-  }, [token, tenantId, pageSize, resumeThrottleMs]);
+  }, [authToken, currentTenantId, syncPageSize, resumeSyncThrottleMs]);
 }

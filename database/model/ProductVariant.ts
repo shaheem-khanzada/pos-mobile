@@ -1,6 +1,7 @@
 import { Model } from '@nozbe/watermelondb';
-import { date, field, immutableRelation, text } from '@nozbe/watermelondb/decorators';
+import { date, field, immutableRelation, json, text } from '@nozbe/watermelondb/decorators';
 import type { SyncState } from '../types';
+import { sanitizer } from '../utils';
 
 import Product from './Product';
 
@@ -17,7 +18,7 @@ export default class ProductVariant extends Model {
   @field('inventory') inventory!: number | null;
   @field('price_in_pkr_enabled') priceInPKREnabled!: boolean | null;
   @field('price_in_pkr') priceInPKR!: number | null;
-  @text('options_json') optionsJson!: string | null;
+  @json('options', sanitizer) options!: string[] | null;
   @text('tenant') tenant!: string | null;
   @text('sync_state') syncState!: SyncState;
   @date('deleted_at') deletedAt!: Date | null;

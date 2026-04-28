@@ -31,7 +31,7 @@ export const databaseSchema = appSchema({
         { name: 'inventory', type: 'number', isOptional: true },
         { name: 'price_in_pkr_enabled', type: 'boolean', isOptional: true },
         { name: 'price_in_pkr', type: 'number', isOptional: true },
-        { name: 'options_json', type: 'string', isOptional: true },
+        { name: 'options', type: 'string', isOptional: true },
         { name: 'tenant', type: 'string', isOptional: true, isIndexed: true },
         { name: 'sync_state', type: 'string', isIndexed: true },
         { name: 'deleted_at', type: 'number', isOptional: true },

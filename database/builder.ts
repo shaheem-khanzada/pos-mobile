@@ -56,7 +56,7 @@ export function buildVariant(
     inventory: variant.inventory ?? null,
     priceInPKREnabled: true,
     priceInPKR: variant.priceInPKR ?? null,
-    optionsJson: JSON.stringify(variant.options ?? []),
+    options: Array.isArray(variant.options) ? variant.options : [],
     tenant: extractId(variant.tenant),
     syncState: 'synced' as const,
     deletedAt: null,
