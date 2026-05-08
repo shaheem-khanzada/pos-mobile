@@ -5,8 +5,16 @@ import { StateStorage, createJSONStorage, persist } from 'zustand/middleware';
 type SyncMetaState = {
   lastFetchedProducts: string | null;
   lastFetchOrders: string | null;
+  lastFetchedCategories: string | null;
+  lastFetchedVariantTypes: string | null;
+  lastFetchedVariantOptions: string | null;
+  lastFetchedMedia: string | null;
   setLastFetchedProducts: (isoDate: string) => void;
   setLastFetchOrders: (isoDate: string) => void;
+  setLastFetchedCategories: (isoDate: string) => void;
+  setLastFetchedVariantTypes: (isoDate: string) => void;
+  setLastFetchedVariantOptions: (isoDate: string) => void;
+  setLastFetchedMedia: (isoDate: string) => void;
 };
 
 const mmkv = createMMKV({
@@ -31,8 +39,16 @@ export const useSyncMetaStore = create<SyncMetaState>()(
     (set) => ({
       lastFetchedProducts: null,
       lastFetchOrders: null,
+      lastFetchedCategories: null,
+      lastFetchedVariantTypes: null,
+      lastFetchedVariantOptions: null,
+      lastFetchedMedia: null,
       setLastFetchedProducts: (isoDate) => set({ lastFetchedProducts: isoDate }),
       setLastFetchOrders: (isoDate) => set({ lastFetchOrders: isoDate }),
+      setLastFetchedCategories: (isoDate) => set({ lastFetchedCategories: isoDate }),
+      setLastFetchedVariantTypes: (isoDate) => set({ lastFetchedVariantTypes: isoDate }),
+      setLastFetchedVariantOptions: (isoDate) => set({ lastFetchedVariantOptions: isoDate }),
+      setLastFetchedMedia: (isoDate) => set({ lastFetchedMedia: isoDate }),
     }),
     {
       name: 'database-sync-meta',
@@ -55,4 +71,47 @@ export function setLastFetchOrders(isoDate: string) {
 
 export function getLastFetchOrders() {
   return useSyncMetaStore.getState().lastFetchOrders;
+}
+
+export function setLastFetchedCategories(isoDate: string) {
+  useSyncMetaStore.getState().setLastFetchedCategories(isoDate);
+}
+
+export function getLastFetchedCategories() {
+  return useSyncMetaStore.getState().lastFetchedCategories;
+}
+
+export function setLastFetchedVariantTypes(isoDate: string) {
+  useSyncMetaStore.getState().setLastFetchedVariantTypes(isoDate);
+}
+
+export function getLastFetchedVariantTypes() {
+  return useSyncMetaStore.getState().lastFetchedVariantTypes;
+}
+
+export function setLastFetchedVariantOptions(isoDate: string) {
+  useSyncMetaStore.getState().setLastFetchedVariantOptions(isoDate);
+}
+
+export function getLastFetchedVariantOptions() {
+  return useSyncMetaStore.getState().lastFetchedVariantOptions;
+}
+
+export function setLastFetchedMedia(isoDate: string) {
+  useSyncMetaStore.getState().setLastFetchedMedia(isoDate);
+}
+
+export function getLastFetchedMedia() {
+  return useSyncMetaStore.getState().lastFetchedMedia;
+}
+
+export function resetSyncMetaStore() {
+  useSyncMetaStore.setState({
+    lastFetchedProducts: null,
+    lastFetchOrders: null,
+    lastFetchedCategories: null,
+    lastFetchedVariantTypes: null,
+    lastFetchedVariantOptions: null,
+    lastFetchedMedia: null,
+  });
 }

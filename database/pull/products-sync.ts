@@ -121,17 +121,19 @@ export async function syncProductsFromApi(options?: { pageSize?: number }) {
     const productsToCreate = activeDocs.filter((doc) => !localById.has(doc.id));
 
     const createProductOps = productsToCreate.map((doc) => {
-      const fields = buildProduct(doc);
+      const { media: mediaId, ...fields } = buildProduct(doc);
       return productsCollection.prepareCreate((row) => {
         row._raw = sanitizedRaw({ id: doc.id }, productsCollection.schema);
+        row.media.id = mediaId ?? null;
         Object.assign(row, fields);
       });
     });
 
     const updateProductOps = productsToUpdate.map((doc) => {
       const product = localById.get(doc.id)!;
-      const fields = buildProduct(doc);
+      const { media: mediaId, ...fields } = buildProduct(doc);
       return product.prepareUpdate((row) => {
+        row.media.id = mediaId ?? null;
         Object.assign(row, fields);
       });
     });

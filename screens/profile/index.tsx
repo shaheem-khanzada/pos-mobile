@@ -1,5 +1,6 @@
 import { Camera, ChevronRight, LogOut, Printer, Shield, Store, Sun, User, Users } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { VStack } from '@/components/ui/vstack';
@@ -8,9 +9,11 @@ import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
+import { deleteDatabase } from '@/database';
 import { useLogoutMutation } from '@/hooks/auth/use-auth-mutations';
 import { cn } from '@/lib/cn';
 import { fieldLabelClass, variationCardSurfaceClass } from '@/theme/ui';
+import { useState } from 'react';
 
 type ProfileMenuRowProps = {
   icon: typeof User;
@@ -43,6 +46,34 @@ function ProfileMenuRow({ icon, title, subtitle, onPress }: ProfileMenuRowProps)
 export function ProfileScreen() {
   const router = useRouter();
   const logoutMutation = useLogoutMutation();
+  const [isClearingDb, setIsClearingDb] = useState(false);
+
+  const handleClearDatabase = () => {
+    if (isClearingDb) return;
+    Alert.alert(
+      'Clear local database',
+      'This will delete all local synced data on this device. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsClearingDb(true);
+              await deleteDatabase();
+              Alert.alert('Done', 'Local database cleared successfully.');
+            } catch (error) {
+              console.error('[db] clear failed', error);
+              Alert.alert('Error', 'Failed to clear local database.');
+            } finally {
+              setIsClearingDb(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-app-page" edges={['top', 'left', 'right']}>
@@ -130,6 +161,21 @@ export function ProfileScreen() {
             <Icon as={LogOut} size="sm" className="text-white" />
             <Text className="text-base font-bold text-white">
               {logoutMutation.isPending ? 'Logging out...' : 'Log out'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleClearDatabase}
+            disabled={isClearingDb}
+            className={cn(
+              'h-14 w-full flex-row items-center justify-center gap-2 rounded-3xl bg-orange-500 active:opacity-90',
+              isClearingDb && 'opacity-70'
+            )}
+            accessibilityRole="button"
+            accessibilityLabel="Clear local database"
+          >
+            <Text className="text-base font-bold text-white">
+              {isClearingDb ? 'Clearing database...' : 'Clear database'}
             </Text>
           </Pressable>
         </VStack>

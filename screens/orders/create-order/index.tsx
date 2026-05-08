@@ -22,13 +22,14 @@ import {
   standardInputClass,
   variationCardSurfaceClass,
 } from '@/theme/ui';
-import { useCreateCartMutation } from '@/hooks/use-carts-mutations';
+import { createLocalOrder, syncOrdersToApi, type CreateLocalOrderLineInput } from '@/database';
+import { getSelectedTenantId } from '@/screens/auth/stores/auth-store';
 import { setToast } from '@/toast/store';
 import { CartItemRow } from '@/screens/orders/components/create-order/cart-item';
 import { PlaceOrderBar } from '@/screens/orders/components/create-order/place-order-bar';
-import { cartItemListKey } from '@/screens/orders/types';
+import { cartItemListKey, cartItemUnitCost, cartItemUnitPrice } from '@/screens/orders/types';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
-import { Cart } from '@/payload/types';
+import type { Cart } from '@/payload/types';
 
 const PAYMENT_OPTIONS = [
   { id: 'cash' as const, label: 'CASH' },
@@ -41,7 +42,7 @@ export function CreateOrderScreen() {
 
   const { cartItems, setCartItems, subtotal, changeQty, removeCartItem } = useCartItems();
 
-  const createCartMutation = useCreateCartMutation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const [orderSectionY, setOrderSectionY] = useState<number | null>(null);
@@ -82,38 +83,73 @@ export function CreateOrderScreen() {
       return;
     }
 
-    const payload: Partial<Cart> = {
-      customerName: fullName.trim() || 'Guest',
-      customerPhone: phone.trim() || null,
-      paymentMethod: paymentMethod,
-      items: cartItems.map(({ id: _id, ...item }) => item) as never,
-      subtotal: total,
-      currency: 'PKR',
-      status: 'purchased',
-      purchasedAt: new Date().toISOString(),
-    };
+    const purchasedAt = new Date();
 
+    const lines: CreateLocalOrderLineInput[] = cartItems.map((line) => ({
+      productId: line.product.id,
+      variantId: line.variant?.id ?? null,
+      quantity: line.quantity,
+      unitPriceInPKR:
+        line.unitPriceInPKR != null && Number.isFinite(line.unitPriceInPKR)
+          ? line.unitPriceInPKR
+          : cartItemUnitPrice(line),
+      unitCostInPKR: cartItemUnitCost(line),
+    }));
+
+    setIsSubmitting(true);
     try {
-      await createCartMutation.mutateAsync(payload);
+      await createLocalOrder(
+        {
+          status: 'purchased',
+          paymentMethod,
+          customerName: fullName.trim() || 'Guest',
+          customerPhone: phone.trim() || null,
+          currency: 'PKR',
+          subtotal,
+          discount,
+          tenant: getSelectedTenantId(),
+          purchasedAt,
+        },
+        lines
+      );
+      try {
+        const { failed } = await syncOrdersToApi();
+        if (failed > 0) {
+          setToast({
+            variant: 'warning',
+            title: 'Order saved',
+            description: 'Could not reach the server. Your order will sync automatically later.',
+          });
+        }
+      } catch {
+        setToast({
+          variant: 'warning',
+          title: 'Order saved',
+          description: 'Could not sync to the server now. It will retry on the next sync.',
+        });
+      }
       setCartItems([]);
       router.back();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Could not place order.';
+      const message =
+        e instanceof Error ? e.message : 'Could not save order locally.';
       setToast({
         variant: 'error',
         title: 'Order failed',
         description: message,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }, [
-    createCartMutation,
-    fullName,
     cartItems,
+    discount,
+    fullName,
     paymentMethod,
     phone,
     router,
     setCartItems,
-    total,
+    subtotal,
   ]);
 
   return (
@@ -298,8 +334,8 @@ export function CreateOrderScreen() {
           cartBadgeCount={cartItemCount}
           onViewItems={scrollToOrderItems}
           onConfirm={onPlaceOrder}
-          confirmDisabled={cartItemCount === 0}
-          isConfirmLoading={createCartMutation.isPending}
+          confirmDisabled={cartItemCount === 0 || isSubmitting}
+          isConfirmLoading={isSubmitting}
         />
       </Box>
     </SafeAreaView>

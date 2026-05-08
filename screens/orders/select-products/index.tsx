@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
+import BottomSheetGorhom from '@gorhom/bottom-sheet';
 import { ArrowLeft, ChevronRight, ScanLine, Search, ShoppingCart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useBarcode } from '@/screens/barcode/hooks/use-barcode';
@@ -13,22 +14,21 @@ import { Pressable } from '@/components/ui/pressable';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
-import {
-  BottomSheet,
-  useBottomSheetContext,
-} from '@/components/ui/bottomsheet';
-import { BotomSheetWrapper } from '@/components/app-bottom-sheet';
+import { BottomSheet } from '@/components/ui/bottomsheet';
+import { BottomSheetWrapper } from '@/components/app-bottom-sheet';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
-import { useProductsListQuery } from '@/hooks/use-products-mutations';
+import { fetchProductsObservable } from '@/database';
+import type Product from '@/database/model/Product';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
 import { cartItemUnitPrice } from '@/screens/orders/types';
+import { findBarcodeCatalogMatch } from '@/screens/barcode/utils/find-barcode-catalog-match';
 import {
   addOrIncrementCatalogCartItem,
+  addOrIncrementVariantCartItem,
   applyVariantSelectionToCartItems,
   decrementOrRemoveCatalogCartItem,
-  qtyForCatalog,
   type CatalogProduct,
   type MergeVariantPayload,
 } from '@/screens/orders/utils/product-catalog';
@@ -38,19 +38,25 @@ import {
   type VariantSheetConfirmUnion,
 } from '@/components/select-product-variant-sheet';
 import { SelectedProductListSheetContent } from '@/components/selected-product-list-sheet';
-import { ProductPickerItem } from '@/screens/orders/components/select-products/product-picker-item';
+import { ProductPickerListItem } from '@/screens/orders/components/select-products/product-picker-list-item';
 import { PlaceOrderBar } from '@/screens/orders/components/create-order/place-order-bar';
+import { useSelectProductsSheetRef } from '@/screens/orders/hooks/use-select-products-sheet-ref';
 
 type SheetMode = 'variant' | 'selection' | null;
 
 /**
- * Must render under {@link BottomSheet} so {@link useBottomSheetContext} is defined.
+ * Renders under Gluestack `BottomSheet` so `BottomSheetWrapper` can propagate index changes
+ * via context `handleClose`; sheet content also receives `closeSheet` as `onRequestClose`
+ * (same ref + `close()` pattern as create-product media / variant sheets).
  */
 function SelectProductsMain({
   sheetMode,
   setSheetMode,
   variantSheetProduct,
   setVariantSheetProduct,
+  sheetRef,
+  openSheet,
+  closeSheet,
 }: {
   sheetMode: SheetMode;
   setSheetMode: React.Dispatch<React.SetStateAction<SheetMode>>;
@@ -58,29 +64,33 @@ function SelectProductsMain({
   setVariantSheetProduct: React.Dispatch<
     React.SetStateAction<CatalogProduct | null>
   >;
+  sheetRef: React.RefObject<BottomSheetGorhom | null>;
+  openSheet: () => void;
+  closeSheet: () => void;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { handleOpen } = useBottomSheetContext();
   const { cartItems, setCartItems } = useCartItems();
   const [search, setSearch] = useState('');
   const { scannedBarcode, clearScannedBarcode, openBarcodeScanner } = useBarcode();
-  const listRef = useRef<FlatList<CatalogProduct>>(null);
-  const productsQuery = useProductsListQuery({ limit: 100, sort: '-createdAt' });
-  const products = productsQuery.data ?? [];
+  const listRef = useRef<FlatList<Product>>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
-  const filteredCatalog = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const list = q
-      ? products.filter(
-          (p) =>
-            (p.title ?? '').toLowerCase().includes(q) ||
-            (p.barcode ?? '').toLowerCase().includes(q) ||
-            p.id.toLowerCase().includes(q)
-        )
-      : products;
-    return list;
-  }, [products, search]);
+  const fetchProducts = useCallback(() => {
+    const observable = fetchProductsObservable({
+      search: search.trim() || undefined,
+    });
+    return observable.subscribe((rows) => {
+      setProducts(rows);
+      setIsLoadingProducts(false);
+    });
+  }, [search]);
+
+  useEffect(() => {
+    const sub = fetchProducts();
+    return () => sub.unsubscribe();
+  }, [fetchProducts]);
 
   const subtotal = useMemo(
     () => cartItems.reduce((s, l) => s + cartItemUnitPrice(l) * l.quantity, 0),
@@ -114,6 +124,7 @@ function SelectProductsMain({
             variantId: item.variantId,
             name: item.itemDisplayName,
             priceInPKR: item.priceInPKR,
+            costInPKR: item.costInPKR ?? null,
             quantity: item.qty,
             payloadProductId: product.id,
             variantRelationId: product.variants?.find(
@@ -126,6 +137,7 @@ function SelectProductsMain({
               variantId: payload.variantId,
               name: payload.itemDisplayName,
               priceInPKR: payload.priceInPKR,
+              costInPKR: payload.costInPKR ?? null,
               quantity: payload.qty,
               payloadProductId: product.id,
               variantRelationId: product.variants?.find(
@@ -153,13 +165,13 @@ function SelectProductsMain({
 
   useEffect(() => {
     if (sheetMode === 'selection') {
-      requestAnimationFrame(() => handleOpen());
+      requestAnimationFrame(() => openSheet());
       return;
     }
     if (sheetMode === 'variant' && variantSheetProduct) {
-      requestAnimationFrame(() => handleOpen());
+      requestAnimationFrame(() => openSheet());
     }
-  }, [handleOpen, sheetMode, variantSheetProduct]);
+  }, [openSheet, sheetMode, variantSheetProduct]);
 
   const adjustLineQty = useCallback(
     (lineId: string, delta: number) => {
@@ -195,13 +207,13 @@ function SelectProductsMain({
   }, [router]);
 
   const renderItem = useCallback(
-    ({ item }: { item: CatalogProduct }) => (
-      <ProductPickerItem
+    ({ item }: { item: Product }) => (
+      <ProductPickerListItem
         product={item}
-        selectedQty={qtyForCatalog(cartItems, item.id)}
-        onIncrement={() => onIncrementProduct(item)}
-        onDecrement={() => onDecrementProduct(item)}
-        onOpenVariantSheet={() => openVariantSheet(item)}
+        cartItems={cartItems}
+        onIncrement={onIncrementProduct}
+        onDecrement={onDecrementProduct}
+        onOpenVariantSheet={openVariantSheet}
       />
     ),
     [cartItems, onIncrementProduct, onDecrementProduct, openVariantSheet]
@@ -268,9 +280,30 @@ function SelectProductsMain({
 
   useEffect(() => {
     if (!scannedBarcode) return;
-    setSearch(scannedBarcode);
-    clearScannedBarcode();
-  }, [clearScannedBarcode, scannedBarcode]);
+    let cancelled = false;
+    void (async () => {
+      const code = scannedBarcode;
+      const match = await findBarcodeCatalogMatch(code);
+      if (cancelled) return;
+      if (match) {
+        if (match.kind === 'simple') {
+          setCartItems((prev) =>
+            addOrIncrementCatalogCartItem(prev, match.product)
+          );
+        } else {
+          setCartItems((prev) =>
+            addOrIncrementVariantCartItem(prev, match.product, match.variant)
+          );
+        }
+      } else {
+        setSearch(code);
+      }
+      clearScannedBarcode();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clearScannedBarcode, scannedBarcode, setCartItems]);
 
   return (
     <SafeAreaView
@@ -298,7 +331,7 @@ function SelectProductsMain({
           </Pressable>
         </HStack>
 
-        {productsQuery.isPending ? (
+        {isLoadingProducts ? (
           <VStack className="flex-1 items-center justify-center gap-3">
             <ActivityIndicator size="small" />
             <Text className="text-sm text-typography-500">Loading products...</Text>
@@ -306,16 +339,12 @@ function SelectProductsMain({
         ) : (
           <FlatList
             ref={listRef}
-            data={filteredCatalog}
+            data={products}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}
             renderItem={renderItem}
             ListEmptyComponent={
-              productsQuery.isError ? (
-                <Text className="py-8 text-center text-sm text-error-500">
-                  Could not load products.
-                </Text>
-              ) : search.trim() ? (
+              search.trim() ? (
                 <Text className="py-8 text-center text-sm text-secondary-500 dark:text-typography-400">
                   No products match your search.
                 </Text>
@@ -346,16 +375,18 @@ function SelectProductsMain({
         />
       </Box>
 
-      <BotomSheetWrapper
+      <BottomSheetWrapper
+        ref={sheetRef}
         snapPoints={['28%', '88%']}
         enablePanDownToClose
-        enableDynamicSizing
+        enableDynamicSizing={true}
       >
         {sheetMode === 'variant' && variantSheetProduct ? (
           <SelectProductVariantSheetContent
             key={variantSheetProduct.id}
             product={variantSheetProduct}
             cartItems={cartItems}
+            onRequestClose={closeSheet}
             onConfirm={(payload: VariantSheetConfirmUnion) =>
               onVariantConfirm(variantSheetProduct, payload)
             }
@@ -367,17 +398,21 @@ function SelectProductsMain({
             cartItems={cartItems}
             totalUnits={totalUnits}
             subtotal={subtotal}
+            onRequestClose={closeSheet}
             onAdjustCartItemQty={adjustLineQty}
             onRemoveCartItem={removeLine}
             onClearAll={clearAllCartItems}
           />
         ) : null}
-      </BotomSheetWrapper>
+      </BottomSheetWrapper>
     </SafeAreaView>
   );
 }
 
 export function SelectProductsScreen() {
+  const { sheetRef, openSheet, closeSheet } = useSelectProductsSheetRef({
+    snapToIndex: 1,
+  });
   const [sheetMode, setSheetMode] = useState<SheetMode>(null);
   const [variantSheetProduct, setVariantSheetProduct] =
     useState<CatalogProduct | null>(null);
@@ -391,6 +426,9 @@ export function SelectProductsScreen() {
       }}
     >
       <SelectProductsMain
+        sheetRef={sheetRef}
+        openSheet={openSheet}
+        closeSheet={closeSheet}
         sheetMode={sheetMode}
         setSheetMode={setSheetMode}
         variantSheetProduct={variantSheetProduct}

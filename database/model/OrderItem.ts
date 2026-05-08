@@ -20,6 +20,8 @@ export default class OrderItem extends Model {
   };
 
   @field('quantity') quantity!: number;
+  @field('unit_price_in_pkr') unitPriceInPKR!: number | null;
+  @field('unit_cost_in_pkr') unitCostInPKR!: number | null;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 

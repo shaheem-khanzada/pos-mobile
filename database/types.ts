@@ -41,6 +41,7 @@ export interface VariantOption {
   id: string;
   label: string;
   value: string;
+  variantType?: string | VariantType;
   tenant?: string | Tenant;
 }
 
@@ -50,6 +51,9 @@ export type Variant = {
   title?: string | null;
   inventory?: number | null;
   priceInPKR?: number | null;
+  costInPKREnabled?: boolean | null;
+  costInPKR?: number | null;
+  priceInPKREnabled?: boolean | null;
   options?: VariantOption[] | string[];
   tenant?: string | Tenant;
 };
@@ -68,7 +72,9 @@ export interface Product {
   variants?: Variant[];
   priceInPKREnabled?: boolean;
   priceInPKR?: number;
-  slug: string;
+  costInPKREnabled?: boolean | null;
+  costInPKR?: number | null;
+  slug?: string | null;
   updatedAt?: string;
   createdAt?: string;
   deletedAt?: string | null;
@@ -78,6 +84,8 @@ export interface CartItem {
   id: string;
   product: Product;
   variant?: Variant;
+  unitPriceInPKR?: number | null;
+  unitCostInPKR?: number | null;
   quantity: number;
 }
 
@@ -86,9 +94,13 @@ export interface Cart {
   items: CartItem[];
   purchasedAt?: string | null;
   subtotal?: number | null;
+  /** Order-level discount in PKR (subtotal − discount = amount charged). */
+  discount?: number | null;
   currency?: 'PKR' | null;
   tenant?: string | Tenant;
-  customerName: string;
+  cogsTotal?: number | null;
+  grossProfit?: number | null;
+  customerName?: string | null;
   customerPhone?: string | null;
   paymentMethod: 'cash' | 'online' | 'card';
   status?: ('active' | 'purchased' | 'abandoned') | null;

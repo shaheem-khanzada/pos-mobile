@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 import { ArrowLeft, Settings } from 'lucide-react-native';
 import MaskedView from '@react-native-masked-view/masked-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BotomSheetWrapper } from '@/components/app-bottom-sheet';
+import { BottomSheetWrapper } from '@/components/app-bottom-sheet';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
@@ -15,7 +15,6 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { SelectedProductListSheetContent } from '@/components/selected-product-list-sheet';
-import { useProductsListQuery } from '@/hooks/use-products-mutations';
 import { useCartItems } from '@/screens/orders/stores/cart-items-context';
 import {
   addOrIncrementCatalogCartItem,
@@ -24,7 +23,7 @@ import {
 import { cartItemUnitPrice } from '@/screens/orders/types';
 import { useBarcodeStore } from './stores/barcode-store';
 import { ExpoBarcodeCamera } from './components/expo-barcode-camera';
-import { resolveBarcodeToCatalogMatch } from './utils/resolve-barcode-match';
+import { findBarcodeCatalogMatch } from './utils/find-barcode-catalog-match';
 
 const { width, height } = Dimensions.get('window');
 const FRAME_SIZE = Math.min(width, height) * 0.8;
@@ -43,8 +42,6 @@ export function BarcodeScannerScreen() {
 
   const setScannedBarcode = useBarcodeStore((s) => s.setScannedBarcode);
   const { cartItems, setCartItems } = useCartItems();
-  const productsQuery = useProductsListQuery({ limit: 100, sort: '-createdAt' });
-  const products = productsQuery.data ?? [];
 
   const [cartSheetIndex, setCartSheetIndex] = useState(() =>
     isMulti && cartItems.length > 0 ? 0 : -1
@@ -55,13 +52,7 @@ export function BarcodeScannerScreen() {
   const player = useAudioPlayer(require('@/assets/sounds/beep.wav'));
   const lastScanRef = useRef<{ value?: string; at: number }>({ value: undefined, at: 0 });
   const debounceUntilRef = useRef(0);
-
-  useEffect(() => {
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: false,
-    });
-  }, []);
+  const didConfigureAudioRef = useRef(false);
 
   useEffect(() => {
     if (!isMulti) return;
@@ -71,6 +62,13 @@ export function BarcodeScannerScreen() {
   }, [isMulti, cartItems.length]);
 
   const playBeep = useCallback(() => {
+    if (!didConfigureAudioRef.current) {
+      didConfigureAudioRef.current = true;
+      void setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+      });
+    }
     void player.seekTo(0);
     player.play();
   }, [player]);
@@ -101,31 +99,27 @@ export function BarcodeScannerScreen() {
         return;
       }
 
-      if (productsQuery.isPending && products.length === 0) {
+      void (async () => {
+        const match = await findBarcodeCatalogMatch(value);
+        if (!match) {
+          setCartSheetIndex(0);
+          setScannerPaused(true);
+          return;
+        }
+
+        if (match.kind === 'simple') {
+          setCartItems((prev) => addOrIncrementCatalogCartItem(prev, match.product));
+        } else {
+          setCartItems((prev) =>
+            addOrIncrementVariantCartItem(prev, match.product, match.variant)
+          );
+        }
+
         setCartSheetIndex(0);
         setScannerPaused(true);
-        return;
-      }
-
-      const match = resolveBarcodeToCatalogMatch(products, value);
-      if (!match) {
-        setCartSheetIndex(0);
-        setScannerPaused(true);
-        return;
-      }
-
-      if (match.kind === 'simple') {
-        setCartItems((prev) => addOrIncrementCatalogCartItem(prev, match.product));
-      } else {
-        setCartItems((prev) =>
-          addOrIncrementVariantCartItem(prev, match.product, match.variant)
-        );
-      }
-
-      setCartSheetIndex(0);
-      setScannerPaused(true);
+      })();
     },
-    [isMulti, playBeep, products, productsQuery.isPending, router, setCartItems, setScannedBarcode]
+    [isMulti, playBeep, router, setCartItems, setScannedBarcode]
   );
 
   const adjustCartLineQty = useCallback(
@@ -183,7 +177,7 @@ export function BarcodeScannerScreen() {
         </HStack>
       </SafeAreaView>
 
-      <Box className="absolute inset-0">
+      <Box className="absolute inset-0" pointerEvents="box-none">
         <MaskedView
           style={StyleSheet.absoluteFillObject}
           maskElement={
@@ -277,7 +271,7 @@ export function BarcodeScannerScreen() {
       ) : null}
 
       {isMulti ? (
-        <BotomSheetWrapper
+        <BottomSheetWrapper
           index={cartSheetIndex}
           onChange={setCartSheetIndex}
           snapPoints={CART_SHEET_SNAPS}
@@ -289,11 +283,12 @@ export function BarcodeScannerScreen() {
             cartItems={cartItems}
             totalUnits={totalUnits}
             subtotal={subtotal}
+            onRequestClose={() => setCartSheetIndex(-1)}
             onAdjustCartItemQty={adjustCartLineQty}
             onRemoveCartItem={removeCartItem}
             onClearAll={clearAllCartItems}
           />
-        </BotomSheetWrapper>
+        </BottomSheetWrapper>
       ) : null}
     </Box>
   );

@@ -1,7 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
-import { CreateVariantScreen } from '@/screens/products/create-variant';
+import { Redirect } from 'expo-router';
 
+/** Standalone variant editor was removed; variants are edited from the product screen. */
 export default function CreateVariantRoute() {
-  const { variantId } = useLocalSearchParams<{ variantId?: string }>();
-  return <CreateVariantScreen key={variantId ?? 'new'} />;
+  return <Redirect href="/tabs/products" />;
 }

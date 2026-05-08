@@ -22,7 +22,6 @@ export function useLoginMutation() {
       const token = result.token;
       const tenants = result.user?.tenants ?? [];
       const tenantId = relationId(tenants[0]?.tenant) ?? null;
-      console.log('tenantId', tenantId);
       if (!token) {
         throw new Error('Login succeeded but the server did not return a token.');
       }
@@ -39,6 +38,7 @@ export function useLoginMutation() {
       router.replace('/tabs/orders');
     },
     onError: (error) => {
+      console.log('error', error);
       showApiErrorToast('Login', error);
     },
   });

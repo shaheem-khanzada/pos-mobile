@@ -41,6 +41,11 @@ export function buildProductFormInitialFromProduct(product: Product) {
         typeof p.priceInPKREnabled === 'boolean'
           ? p.priceInPKREnabled
           : !Boolean(p.enableVariants),
+      costInPKR: p.costInPKR ?? undefined,
+      costInPKREnabled:
+        typeof p.costInPKREnabled === 'boolean'
+          ? p.costInPKREnabled
+          : p.costInPKR != null,
       categories: relationIds(p.categories),
       variantTypes: p.variantTypes ?? [],
       media: p.media.id,

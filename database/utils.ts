@@ -1,3 +1,11 @@
+import type { SyncState } from './types';
+
+/** Apply server-style fields when mutating existing rows pending push. */
+export function nextSyncState(current: SyncState): SyncState {
+  if (current === 'deleted' || current === 'created') return current;
+  return 'updated';
+}
+
 export function isSoftDeleted(doc: { deletedAt?: string | null }) {
   return Boolean(doc.deletedAt);
 }
@@ -38,12 +46,17 @@ export function extractId(
 /** Watermelon default ids are 16 alnum chars. */
 const LOCAL_ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-export function makeLocalId(): string {
+export function makeLocalId() {
   let out = '';
   for (let i = 0; i < 16; i += 1) {
     out += LOCAL_ID_ALPHABET[Math.floor(Math.random() * LOCAL_ID_ALPHABET.length)];
   }
   return out;
+}
+
+export function extractRemoteCreatedId(response: any): string | null {
+  const id = response?.id ?? response?.doc?.id ?? response?.data?.id;
+  return typeof id === 'string' ? id : null;
 }
 
 export const sanitizer = (r: object): object => r;

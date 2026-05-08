@@ -3,10 +3,10 @@ import { formatRs } from '@/lib/format-rs';
 import { cartOrderNumberLabel } from '@/screens/orders/orders-list/map-cart-to-order-list-item';
 import { cartItemUnitPrice } from '@/screens/orders/types';
 import { usePrinterStore } from '@/screens/printers/store';
+import { getReceiptStoreDisplayName } from '@/screens/auth/stores/auth-store';
 import { setToast } from '@/toast/store';
 import { printBleReceipt } from './ble-printer';
 const RECEIPT_WIDTH = 32;
-const SHOP_NAME = 'POSH STORE';
 const FOOTER_LINES = ['Thank you for shopping!', 'Please visit again'];
 
 function paymentLabel(method: Cart['paymentMethod']): string {
@@ -37,7 +37,8 @@ function buildReceiptText(cart: Cart): string {
   const orderNo = cartOrderNumberLabel(cart);
   const created = new Date(cart.createdAt).toLocaleString();
 
-  lines.push(centerText(SHOP_NAME, RECEIPT_WIDTH));
+  const headerName = getReceiptStoreDisplayName().toUpperCase();
+  lines.push(centerText(headerName, RECEIPT_WIDTH));
   lines.push(centerText('ORDER RECEIPT', RECEIPT_WIDTH));
   lines.push('');
   lines.push(rightPad(`Order #${orderNo}`, RECEIPT_WIDTH));
@@ -60,6 +61,13 @@ function buildReceiptText(cart: Cart): string {
 
   lines.push(divider);
   lines.push(columns('SUBTOTAL', formatRs(cart.subtotal ?? 0), RECEIPT_WIDTH));
+  const disc = cart.discount ?? 0;
+  if (disc > 0) {
+    lines.push(columns('DISCOUNT', `-${formatRs(disc)}`, RECEIPT_WIDTH));
+  }
+  lines.push(
+    columns('TOTAL', formatRs(Math.max(0, (cart.subtotal ?? 0) - disc)), RECEIPT_WIDTH)
+  );
   lines.push('');
   for (const l of FOOTER_LINES) lines.push(centerText(l, RECEIPT_WIDTH));
 

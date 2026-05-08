@@ -75,6 +75,7 @@ export type MergeVariantPayload = {
   variantId: string;
   name: string;
   priceInPKR: number;
+  costInPKR?: number | null;
   quantity: number;
   payloadProductId?: string;
   variantRelationId?: string;
@@ -103,6 +104,8 @@ export function applyVariantSelectionToCartItems(
       id: newCartItemId(),
       quantity: it.quantity,
       product,
+      unitPriceInPKR: it.priceInPKR,
+      unitCostInPKR: it.costInPKR ?? null,
       variant:
         variantById(product, it.variantId) ?? ({ id: it.variantId } as Variant),
     }));
@@ -131,6 +134,8 @@ export function addOrIncrementVariantCartItem(
       quantity: 1,
       product,
       variant,
+      unitPriceInPKR: variant.priceInPKR ?? product.priceInPKR ?? 0,
+      unitCostInPKR: variant.costInPKR ?? product.costInPKR ?? null,
     },
   ];
 }
@@ -154,6 +159,8 @@ export function addOrIncrementCatalogCartItem(
       id: newCartItemId(),
       quantity: 1,
       product,
+      unitPriceInPKR: product.priceInPKR ?? 0,
+      unitCostInPKR: product.costInPKR ?? null,
     },
   ];
 }

@@ -4,6 +4,25 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { User } from '@/payload/types';
 
+/** Payload `users.tenants[]` is often `{ id: junctionId, tenant: { id, name } }`. */
+type UserTenantRow = {
+  id: string;
+  name?: string;
+  tenant?: { id?: string; name?: string };
+};
+
+function tenantIdFromUserTenantRow(row: UserTenantRow): string | undefined {
+  const nestedId = row.tenant?.id;
+  if (nestedId) return nestedId;
+  return row.id;
+}
+
+function tenantNameFromUserTenantRow(row: UserTenantRow): string | undefined {
+  const nested = row.tenant?.name?.trim();
+  if (nested) return nested;
+  return row.name?.trim();
+}
+
 
 type AuthSession= {
   token: string;
@@ -55,3 +74,28 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+export const getSelectedTenantId = () => {
+  const tenantId = useAuthStore.getState().tenantId;
+  if (!tenantId) {
+    throw new Error('Tenant ID is not set');
+  }
+  return tenantId;
+};
+
+/** Header name for receipts — matches selected tenant when available. */
+export function getReceiptStoreDisplayName(): string {
+  const { user, tenantId } = useAuthStore.getState();
+  const fallback = 'Store';
+  const rows = (user?.tenants ?? []) as UserTenantRow[];
+  if (!rows.length) return fallback;
+
+  if (tenantId) {
+    const match = rows.find((r) => tenantIdFromUserTenantRow(r) === tenantId);
+    const name = match ? tenantNameFromUserTenantRow(match) : undefined;
+    if (name) return name;
+  }
+
+  const first = tenantNameFromUserTenantRow(rows[0]);
+  return first || fallback;
+}

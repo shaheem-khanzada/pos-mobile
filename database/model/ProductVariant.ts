@@ -1,5 +1,5 @@
-import { Model } from '@nozbe/watermelondb';
-import { date, field, immutableRelation, json, text } from '@nozbe/watermelondb/decorators';
+import { Model, Relation } from '@nozbe/watermelondb';
+import { date, field, immutableRelation, json, text, writer } from '@nozbe/watermelondb/decorators';
 import type { SyncState } from '../types';
 import { sanitizer } from '../utils';
 
@@ -18,6 +18,8 @@ export default class ProductVariant extends Model {
   @field('inventory') inventory!: number | null;
   @field('price_in_pkr_enabled') priceInPKREnabled!: boolean | null;
   @field('price_in_pkr') priceInPKR!: number | null;
+  @field('cost_in_pkr_enabled') costInPKREnabled!: boolean | null;
+  @field('cost_in_pkr') costInPKR!: number | null;
   @json('options', sanitizer) options!: string[] | null;
   @text('tenant') tenant!: string | null;
   @text('sync_state') syncState!: SyncState;
@@ -25,5 +27,13 @@ export default class ProductVariant extends Model {
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 
-  @immutableRelation('products', 'product_id') product!: Product;
+  @immutableRelation('products', 'product_id') product!: Relation<Product>;
+
+  @writer async markAsSynced() {
+    await this.update((record) => {
+      record.syncState = 'synced';
+      record.updatedAt = new Date();
+    });
+  }
+
 }

@@ -8,8 +8,8 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
 import {
-  BottomSheetItem,
   BottomSheetScrollView,
+  useBottomSheetContext,
 } from '@/components/ui/bottomsheet';
 import { SheetQtyRowCard } from '@/components/orders/sheet-qty-row-card';
 import { QtyStepper } from '@/components/orders/qty-stepper';
@@ -22,6 +22,7 @@ export type VariantSheetConfirmPayload = {
   variantId: string;
   itemDisplayName: string;
   priceInPKR: number;
+  costInPKR?: number | null;
   qty: number;
 };
 
@@ -98,19 +99,30 @@ export type SelectProductVariantSheetContentProps = {
   product: Product;
   /** Current cart items; used to restore qty / multi mode when reopening the sheet. */
   cartItems: CartItem[];
+  /** `sheetRef.close()` from the host hook — create-product sheets use this instead of BottomSheet UI context only. */
+  onRequestClose?: () => void;
   onConfirm: (payload: VariantSheetConfirmUnion) => void;
 };
 
 /**
- * Inner UI for the variant + quantity sheet. Render inside {@link BottomSheetPortal}
- * (sibling to your `FlatList`, under {@link BottomSheet}) so the sheet is not nested
- * in list cells.
+ * Inner UI for the variant sheet. Pass `onRequestClose` from the host for `sheetRef.close()`
+ * (aligned with create-product sheets that use gorhom refs instead of relying on BottomSheet UI context alone).
  */
 export function SelectProductVariantSheetContent({
   product,
   cartItems,
+  onRequestClose,
   onConfirm,
 }: SelectProductVariantSheetContentProps) {
+  const { handleClose } = useBottomSheetContext();
+
+  const dismissSheet = useCallback(() => {
+    if (onRequestClose) {
+      onRequestClose();
+      return;
+    }
+    handleClose();
+  }, [onRequestClose, handleClose]);
   const variants = product.variants ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState(
     () => variants[0]?.id ?? ''
@@ -174,32 +186,42 @@ export function SelectProductVariantSheetContent({
     }));
   }, []);
 
-  const submitSingle = useCallback(() => {
-    if (!selectedVariant) return;
+  const submitSingle = useCallback((): boolean => {
+    if (!selectedVariant) return false;
     onConfirm({
       variantId: selectedVariant.id,
       itemDisplayName: selectedVariant.title ?? '',
       priceInPKR: selectedVariant.priceInPKR ?? 0,
+      costInPKR: selectedVariant.costInPKR ?? null,
       qty,
     });
+    return true;
   }, [onConfirm, qty, selectedVariant]);
 
-  const submitMulti = useCallback(() => {
-    const items: VariantSheetConfirmPayload[] = variants
-      .map((v) => {
-        const q = variantQty[v.id] ?? 0;
-        if (q <= 0) return null;
-        return {
+  const submitMulti = useCallback((): boolean => {
+    const items: VariantSheetConfirmPayload[] = variants.flatMap((v) => {
+      const q = variantQty[v.id] ?? 0;
+      if (q <= 0) return [];
+      return [
+        {
           variantId: v.id,
           itemDisplayName: v.title ?? '',
           priceInPKR: v.priceInPKR ?? 0,
+          costInPKR: v.costInPKR ?? null,
           qty: q,
-        };
-      })
-      .filter((x): x is VariantSheetConfirmPayload => x !== null);
-    if (items.length === 0) return;
+        },
+      ];
+    });
+    if (items.length === 0) return false;
     onConfirm({ items });
+    return true;
   }, [onConfirm, variantQty, variants]);
+
+  const onConfirmPress = useCallback(() => {
+    const ok = isMulti ? submitMulti() : submitSingle();
+    if (!ok) return;
+    dismissSheet();
+  }, [dismissSheet, isMulti, submitMulti, submitSingle]);
 
   if (variants.length === 0) {
     return null;
@@ -222,16 +244,19 @@ export function SelectProductVariantSheetContent({
               Select preferred variant & quantity
             </Text>
           </VStack>
-          <BottomSheetItem
-            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 p-0 active:opacity-80 dark:bg-[#1b1b1c]"
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
             hitSlop={12}
+            onPress={dismissSheet}
+            className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 active:opacity-80 dark:bg-[#1b1b1c]"
           >
             <Icon
               as={X}
               size="md"
               className="text-typography-900 dark:text-typography-0"
             />
-          </BottomSheetItem>
+          </Pressable>
         </HStack>
 
         <HStack className="w-full items-center justify-between px-1 py-1">
@@ -343,12 +368,13 @@ export function SelectProductVariantSheetContent({
           </>
         )}
 
-        <BottomSheetItem
-          closeOnSelect
-          onPress={isMulti ? submitMulti : submitSingle}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add to order"
           disabled={
             isMulti ? !variants.some((v) => (variantQty[v.id] ?? 0) > 0) : false
           }
+          onPress={onConfirmPress}
           className={cn(
             'mt-2 w-full items-center justify-center rounded-full bg-primary-500 py-4 active:opacity-90',
             isMulti &&
@@ -360,7 +386,7 @@ export function SelectProductVariantSheetContent({
             ADD TO ORDER •{' '}
             {formatRs(isMulti ? multiLineTotal : lineTotal)}
           </Text>
-        </BottomSheetItem>
+        </Pressable>
       </VStack>
     </BottomSheetScrollView>
   );

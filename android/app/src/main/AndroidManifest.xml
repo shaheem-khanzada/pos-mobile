@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <uses-permission-sdk-23 android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <uses-permission-sdk-23 android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.BLUETOOTH"/>
@@ -35,6 +37,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="easypos"/>
         <data android:scheme="exp+easypos"/>
+        <data android:scheme="exp+starter-kit-expo"/>
       </intent-filter>
     </activity>
   </application>

@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#10B981"
     },
     "ios": {
       "supportsTablet": true,
@@ -30,22 +30,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#10B981"
       },
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.INTERNET",
-        "android.permission.BLUETOOTH_SCAN",
-        "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.BLUETOOTH",
-        "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE"
-      ],
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.posh"
     },
@@ -69,10 +55,23 @@
           }
         }
       ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#10B981",
+          "image": "./assets/images/splash-icon.png",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#047857"
+          },
+          "imageWidth": 250
+        }
+      ],
       "expo-audio",
       "expo-asset",
       "expo-camera",
-      "expo-image-picker"
+      "expo-image-picker",
+      "react-native-ble-plx"
     ],
     "experiments": {
       "typedRoutes": true

@@ -5,7 +5,8 @@ import { buildOrder } from '../builder';
 import { database } from '../db';
 import Order from '../model/Order';
 import OrderItem from '../model/OrderItem';
-import { isSoftDeleted } from '../utils';
+import type { Cart } from '../types';
+import { isSoftDeleted, extractId } from '../utils';
 import { fetchOrders } from './apis';
 import { getLastFetchOrders, setLastFetchOrders } from './sync-meta-store';
 
@@ -69,6 +70,41 @@ export async function syncOrdersFromApi(options?: { pageSize?: number }) {
     const ordersToUpdate = activeDocs.filter((doc) => localById.has(doc.id));
     const ordersToCreate = activeDocs.filter((doc) => !localById.has(doc.id));
 
+    const existingLineItemsForPage =
+      activeIds.length > 0
+        ? await orderItemsCollection.query(Q.where('order_id', Q.oneOf(activeIds))).fetch()
+        : [];
+    const deleteLineOps = existingLineItemsForPage.map((item) =>
+      item.prepareDestroyPermanently()
+    );
+
+    const now = Date.now();
+    const createLineOps = activeDocs.flatMap((doc: Cart) =>
+      (doc.items ?? []).flatMap((item) => {
+        const productId = extractId(item.product as string | { id: string });
+        if (!productId) return [];
+        const variantId = item.variant ? extractId(item.variant as string | { id: string }) : null;
+        return [
+          orderItemsCollection.prepareCreate((record) => {
+            record._raw = sanitizedRaw(
+              {
+                id: item.id,
+                order_id: doc.id,
+                product_id: productId,
+                variant_id: variantId,
+                quantity: item.quantity,
+                unit_price_in_pkr: item.unitPriceInPKR ?? null,
+                unit_cost_in_pkr: item.unitCostInPKR ?? null,
+                created_at: now,
+                updated_at: now,
+              },
+              orderItemsCollection.schema
+            );
+          }),
+        ];
+      })
+    );
+
     const createOps = ordersToCreate.map((doc) => {
       const fields = buildOrder(doc);
       return ordersCollection.prepareCreate((row) => {
@@ -85,7 +121,9 @@ export async function syncOrdersFromApi(options?: { pageSize?: number }) {
       });
     });
 
+    pageOperations.push(...deleteLineOps);
     pageOperations.push(...createOps, ...updateOps);
+    pageOperations.push(...createLineOps);
     upserted += activeDocs.length;
 
 

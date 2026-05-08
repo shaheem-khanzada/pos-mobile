@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, RefreshCw } from 'lucide-react-native';
 
@@ -15,7 +16,8 @@ import { fieldLabelClass } from '@/theme/ui';
 import { usePrinterStore } from '@/screens/printers/store';
 import type { DiscoveredBlePrinter } from '@/screens/printers/utils/ble-printer';
 import { useBlePrinterDiscovery } from '@/screens/printers/hooks/use-ble-printer-discovery';
-import { PrinterDiscoveryRow } from '@/screens/printers/components/printer-discovery-row';
+import { PrinterNearbyDeviceRow } from '@/screens/printers/components/printer-nearby-device-row';
+import { printerDeviceTypeLabel } from '@/screens/printers/utils/printer-device-type-label';
 
 export function PrintersScreen() {
   const router = useRouter();
@@ -88,22 +90,27 @@ export function PrintersScreen() {
           </Box>
         ) : null}
 
-        <VStack space="xs" className="flex-1">
-          <HStack className="items-center justify-between">
-            <Text className={fieldLabelClass}>Available printers</Text>
-            {defaultPrinter ? (
-              <Pressable
-                onPress={onClearDefault}
-                className="rounded-full border border-[#2A313D] bg-[#0F1319] px-3 py-1.5 active:opacity-80"
-              >
-                <Text className="text-[10px] font-bold uppercase tracking-[1px] text-[#A4AFC0]">
-                  Clear default
-                </Text>
-              </Pressable>
-            ) : null}
+        <VStack space="sm" className="min-h-0 flex-1">
+          <HStack className="items-center justify-between gap-2">
+            <Text className={cn(fieldLabelClass, 'shrink')}>Nearby devices</Text>
+            <HStack className="items-center gap-3">
+              {defaultPrinter ? (
+                <Pressable
+                  onPress={onClearDefault}
+                  className="rounded-full border border-outline-200 bg-app-surface px-3 py-1.5 active:opacity-80 dark:border-outline-100 dark:bg-background-100"
+                >
+                  <Text className="text-[10px] font-bold uppercase tracking-wide text-secondary-600 dark:text-typography-400">
+                    Clear default
+                  </Text>
+                </Pressable>
+              ) : null}
+              {isScanning ? (
+                <ActivityIndicator size="small" color="#10b981" />
+              ) : null}
+            </HStack>
           </HStack>
           <Text className="text-xs text-secondary-500 dark:text-typography-400">
-            Make sure the printer is ON and discoverable in Bluetooth settings, then scan.
+            Bluetooth receipt printers only. Turn the printer on and make it discoverable, then scan.
           </Text>
           <Box className="min-h-[120px] flex-1">
             <FlatList
@@ -123,13 +130,20 @@ export function PrintersScreen() {
                   </Text>
                 </Box>
               }
-              renderItem={({ item }) => (
-                <PrinterDiscoveryRow
-                  device={item}
-                  isDefault={defaultPrinter?.id === item.id}
-                  onSelect={onSelectDevice}
-                />
-              )}
+              renderItem={({ item }) => {
+                const isDef = defaultPrinter?.id === item.id;
+                const displayName = item.name?.trim() || 'Unknown printer';
+                return (
+                  <PrinterNearbyDeviceRow
+                    name={displayName}
+                    deviceType={printerDeviceTypeLabel(item)}
+                    connectLabel={isDef ? 'Default' : 'Connect'}
+                    isDefault={isDef}
+                    connectDisabled={isDef}
+                    onConnect={isDef ? undefined : () => onSelectDevice(item)}
+                  />
+                );
+              }}
             />
           </Box>
         </VStack>

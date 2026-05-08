@@ -1,7 +1,7 @@
-import type React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { forwardRef, useCallback } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useColorScheme } from 'nativewind';
-import {
+import GorhomBottomSheet, {
   BottomSheetBackdrop as GorhomBottomSheetBackdrop,
   type BottomSheetBackdropProps as GorhomBottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
@@ -11,13 +11,16 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import {
-  BottomSheetPortal,
-} from '@/components/ui/bottomsheet';
+import { useBottomSheetContext } from '@/components/ui/bottomsheet';
 
-type BottomSheetPortalProps = React.ComponentProps<typeof BottomSheetPortal>;
+type IBottomSheetProps = React.ComponentProps<typeof GorhomBottomSheet>;
 
-function BlurredBackdrop(props: GorhomBottomSheetBackdropProps) {
+export type BottomSheetWrapperProps = Partial<IBottomSheetProps> & {
+  snapPoints: string[];
+  children?: React.ReactNode;
+};
+
+function IOSBlurredBackdrop(props: GorhomBottomSheetBackdropProps) {
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       props.animatedIndex.value,
@@ -28,10 +31,7 @@ function BlurredBackdrop(props: GorhomBottomSheetBackdropProps) {
   }));
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[StyleSheet.absoluteFillObject, animatedStyle]}
-    >
+    <Animated.View style={[StyleSheet.absoluteFillObject, animatedStyle]}>
       <BlurView
         intensity={15}
         tint="default"
@@ -52,38 +52,91 @@ function BlurredBackdrop(props: GorhomBottomSheetBackdropProps) {
   );
 }
 
-/**
- * App-level wrapper around the UI bottom-sheet portal.
- * Keeps app defaults out of `components/ui/*`.
- */
-export function BotomSheetWrapper({
-  children,
-  enablePanDownToClose = true,
-  ...props
-}: BottomSheetPortalProps) {
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
+function BlurredBackdrop(props: GorhomBottomSheetBackdropProps) {
+  if (Platform.OS === 'android') {
+    // expo-blur BlurView + full-screen Animated wrapper still receive touches on Android
+    // when the sheet is closed (index -1), blocking the main screen.
+    return (
+      <GorhomBottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={1}
+        opacity={0.35}
+      />
+    );
+  }
 
-  return (
-    <BottomSheetPortal
-      {...props}
-      enablePanDownToClose={enablePanDownToClose}
-      style={{
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: 'hidden',
-      }}
-      backdropComponent={(backdropProps: GorhomBottomSheetBackdropProps) => (
-        <BlurredBackdrop {...backdropProps} />
-      )}
-      handleStyle={{
-        backgroundColor: isDark ? '#121212' : '#FFFFFF',
-      }}
-      handleIndicatorStyle={{
-        backgroundColor: isDark ? '#10B981' : '#059669',
-      }}
-    >
-      {children}
-    </BottomSheetPortal>
-  );
+  return <IOSBlurredBackdrop {...props} />;
 }
+
+/**
+ * App-level sheet: mirrors UI BottomSheetPortal behavior + app styling,
+ * with merged refs so imperative `ref` (create-product) and context ref (orders) both work.
+ * Implemented here so `components/ui/*` stays untouched.
+ */
+export const BottomSheetWrapper = forwardRef<GorhomBottomSheet, BottomSheetWrapperProps>(
+  function BottomSheetWrapper(props, forwardedRef) {
+    const { colorScheme } = useColorScheme();
+    const isDark = colorScheme === 'dark';
+    const { bottomSheetRef, handleClose } = useBottomSheetContext();
+
+    const {
+      snapPoints,
+      handleComponent: DragIndicator,
+      backdropComponent: _omitBackdrop,
+      children,
+      ...rest
+    } = props;
+
+    const handleSheetChanges = useCallback(
+      (index: number) => {
+        if (index === 0 || index === -1) {
+          handleClose();
+        }
+      },
+      [handleClose]
+    );
+
+    const setMergedRef = useCallback(
+      (node: GorhomBottomSheet | null) => {
+        (bottomSheetRef as React.MutableRefObject<GorhomBottomSheet | null>).current = node;
+        if (typeof forwardedRef === 'function') {
+          forwardedRef(node);
+        } else if (forwardedRef != null) {
+          (forwardedRef as React.MutableRefObject<GorhomBottomSheet | null>).current = node;
+        }
+      },
+      [bottomSheetRef, forwardedRef]
+    );
+
+    return (
+      <GorhomBottomSheet
+        ref={setMergedRef}
+        snapPoints={snapPoints}
+        index={-1}
+        backdropComponent={(backdropProps: GorhomBottomSheetBackdropProps) => (
+          <BlurredBackdrop {...backdropProps} />
+        )}
+        onChange={handleSheetChanges}
+        handleComponent={DragIndicator}
+        enablePanDownToClose={true}
+        {...rest}
+        style={{
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          overflow: 'hidden',
+        }}
+        handleStyle={{
+          backgroundColor: isDark ? '#121212' : '#FFFFFF',
+        }}
+        handleIndicatorStyle={{
+          backgroundColor: isDark ? '#10B981' : '#059669',
+        }}
+      >
+        {children}
+      </GorhomBottomSheet>
+    );
+  }
+);
+
+BottomSheetWrapper.displayName = 'BottomSheetWrapper';

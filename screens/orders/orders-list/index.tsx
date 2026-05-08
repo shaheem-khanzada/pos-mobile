@@ -1,8 +1,10 @@
+import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { Moon, Plus, Search, Sun } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { Moon, Plus, Search, Sun } from 'lucide-react-native';
+import { withObservables } from '@nozbe/watermelondb/react';
+
 import { FlatList } from '@/components/ui/flat-list';
 import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { Box } from '@/components/ui/box';
@@ -14,57 +16,78 @@ import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Icon } from '@/components/ui/icon';
 import { cn } from '@/lib/cn';
-import { useActiveCartsTodayCountQuery, useCartsListQuery } from '@/hooks/use-carts-queries';
+import { fetchOrdersObservable } from '@/database';
+import type Order from '@/database/model/Order';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
 import { useReceiptPrinter } from '@/screens/printers/hooks/use-receipt-printer';
+import { buildReceiptCartFromOrder } from '@/screens/printers/utils/build-receipt-cart-from-order';
 import { setToast } from '@/toast/store';
 import { OrderListItem } from '@/screens/orders/components/orders-list/order-list-item';
-import { mapCartToOrderListItem } from './map-cart-to-order-list-item';
+import {
+  countOrdersCreatedToday,
+  mapOrderModelToOrderListItem,
+} from './map-cart-to-order-list-item';
 import type { OrderListItem as OrderListEntry } from './types';
 
-export function OrdersListScreen() {
+const ORDERS_PAGE_LIMIT = 100;
+
+type OrdersListShellProps = {
+  searchText: string;
+  setSearchText: Dispatch<SetStateAction<string>>;
+};
+
+type OrdersListBodyProps = OrdersListShellProps & {
+  orders: Order[];
+};
+
+function OrdersListBody({ orders, searchText, setSearchText }: OrdersListBodyProps) {
   const router = useRouter();
   const { colorScheme, setColorScheme } = useColorScheme();
-  const [searchText, setSearchText] = useState('');
   const { printCart, printingKey } = useReceiptPrinter();
-  const cartsQuery = useCartsListQuery({ limit: 30, sort: '-createdAt' });
-  const carts = cartsQuery.data;
-  const activeTodayCountQuery = useActiveCartsTodayCountQuery();
 
-  const orders = useMemo(
-    () => carts?.map((cart) => mapCartToOrderListItem(cart)) ?? [],
-    [carts]
+  const ordersMapped = useMemo(
+    () => orders.map((row) => mapOrderModelToOrderListItem(row)),
+    [orders]
   );
 
-  const newOrdersToday = activeTodayCountQuery.data ?? 0;
+  const newOrdersToday = useMemo(() => countOrdersCreatedToday(orders), [orders]);
 
   const filteredOrders = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter(
+    if (!q) return ordersMapped;
+    return ordersMapped.filter(
       (o) =>
         o.orderNumber.toLowerCase().includes(q) ||
         o.customerName.toLowerCase().includes(q) ||
         o.id.toLowerCase().includes(q)
     );
-  }, [orders, searchText]);
+  }, [ordersMapped, searchText]);
 
   const count = filteredOrders.length;
 
   const handlePrint = useCallback(
-    async (order: OrderListEntry) => {
-      const cart = carts?.find((c) => c.id === order.id);
-      if (!cart) {
+    async (orderRow: OrderListEntry) => {
+      const row = orders.find((o) => o.id === orderRow.id);
+      if (!row) {
         setToast({
           variant: 'warning',
           title: 'Print',
-          description: 'Order data is not available. Pull to refresh and try again.',
+          description: 'Order is no longer available locally.',
         });
         return;
       }
-      await printCart(cart, order.id);
+      try {
+        const cart = await buildReceiptCartFromOrder(row);
+        await printCart(cart, orderRow.id);
+      } catch {
+        setToast({
+          variant: 'error',
+          title: 'Print failed',
+          description: 'Could not load order lines for printing.',
+        });
+      }
     },
-    [carts, printCart]
+    [orders, printCart]
   );
 
   const toggleColorScheme = () => {
@@ -113,11 +136,7 @@ export function OrdersListScreen() {
             className={cn(standardInputClass, 'border-0 pl-0')}
           >
             <InputSlot className="justify-center pl-4 pr-2">
-              <InputIcon
-                as={Search}
-                size="md"
-                className="text-secondary-400"
-              />
+              <InputIcon as={Search} size="md" className="text-secondary-400" />
             </InputSlot>
             <InputField
               className="px-0 pr-4 text-sm text-typography-900 placeholder:text-typography-500 dark:text-typography-0"
@@ -137,28 +156,22 @@ export function OrdersListScreen() {
           </HStack>
 
           <Box className="flex-1">
-            {cartsQuery.isPending ? (
-              <VStack className="flex-1 items-center justify-center gap-3">
-                <ActivityIndicator size="small" />
-                <Text className="text-sm text-typography-500">Loading orders...</Text>
-              </VStack>
-            ) : (
-              <FlatList
-                data={filteredOrders}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={{
-                  gap: 12,
-                  paddingBottom: 24,
-                }}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <OrderListItem
-                    order={item}
-                    onPrint={handlePrint}
-                    isPrinting={printingKey === item.id}
-                  />
-                )}
-                ListEmptyComponent={
+            <FlatList
+              data={filteredOrders}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{
+                gap: 12,
+                paddingBottom: 24,
+              }}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <OrderListItem
+                  order={item}
+                  onPrint={handlePrint}
+                  isPrinting={printingKey === item.id}
+                />
+              )}
+              ListEmptyComponent={
                 <Card
                   className={cn(
                     'rounded-2xl border border-outline-100 bg-background-0 p-4',
@@ -171,12 +184,22 @@ export function OrdersListScreen() {
                       : 'No orders yet.'}
                   </Text>
                 </Card>
-                }
-              />
-            )}
+              }
+            />
           </Box>
         </VStack>
       </VStack>
     </SafeAreaView>
+  );
+}
+
+const ObservedOrdersListBody = withObservables([], () => ({
+  orders: fetchOrdersObservable(),
+}))(OrdersListBody);
+
+export function OrdersListScreen() {
+  const [searchText, setSearchText] = useState('');
+  return (
+    <ObservedOrdersListBody searchText={searchText} setSearchText={setSearchText} />
   );
 }

@@ -34,6 +34,7 @@ export function ExpoBarcodeCamera({ onScanned, paused = false }: ExpoBarcodeCame
 
   const onBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => {
+      console.log('result?>>>>>', JSON.stringify(result, null, 2));
       if (paused) return;
       const value = (result.data ?? '').trim();
       if (value) onScanned(value);
@@ -53,7 +54,6 @@ export function ExpoBarcodeCamera({ onScanned, paused = false }: ExpoBarcodeCame
     <CameraView
       ref={cameraRef}
       style={StyleSheet.absoluteFillObject}
-      facing={'back' as CameraType}
       active={!paused}
       barcodeScannerSettings={{
         barcodeTypes: [

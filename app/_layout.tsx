@@ -18,6 +18,7 @@ import { Fab, FabIcon } from '@/components/ui/fab';
 import { MoonIcon, SunIcon, SlashIcon, AddIcon } from '@/components/ui/icon';
 import { createAppQueryClient } from '@/hooks/api/query-client';
 import { AppToast } from '@/toast';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -72,8 +73,10 @@ function RootLayoutNav() {
       <GluestackUIProvider mode={mode}>
         <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <QueryClientProvider client={queryClient}>
-            <Slot />
-            <AppToast />
+            <BottomSheetModalProvider>
+              <Slot />
+              <AppToast />
+            </BottomSheetModalProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </GluestackUIProvider>

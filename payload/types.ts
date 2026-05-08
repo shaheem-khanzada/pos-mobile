@@ -45,6 +45,9 @@ export type Variant = {
   title?: string | null;
   inventory?: number | null;
   priceInPKR?: number | null;
+  costInPKREnabled?: boolean | null;
+  costInPKR?: number | null;
+  priceInPKREnabled?: boolean | null;
   options?: VariantOption[] | string[];
 };
 
@@ -61,6 +64,8 @@ export interface Product {
   variants?: Variant[];
   priceInPKREnabled?: boolean;
   priceInPKR?: number;
+  costInPKREnabled?: boolean | null;
+  costInPKR?: number | null;
   slug: string;
   updatedAt?: string;
   createdAt?: string;
@@ -71,6 +76,10 @@ export interface CartItem {
   id: string;
   product: Product;
   variant?: Variant;
+  /** Frozen line price at add-to-cart time (falls back to catalog prices when absent). */
+  unitPriceInPKR?: number | null;
+  /** Frozen unit cost for COGS / margin when tracked on catalog rows. */
+  unitCostInPKR?: number | null;
   quantity: number;
 }
 
@@ -79,7 +88,10 @@ export interface Cart {
   items: CartItem[];
   purchasedAt?: string | null;
   subtotal?: number | null;
+  discount?: number | null;
   currency?: 'PKR' | null;
+  cogsTotal?: number | null;
+  grossProfit?: number | null;
   customerName: string;
   customerPhone?: string | null;
   paymentMethod: 'cash' | 'online' | 'card';

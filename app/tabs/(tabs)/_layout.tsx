@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
-import { LayoutGrid, ShoppingCart, User } from 'lucide-react-native';
+import { BarChart2, LayoutGrid, ShoppingCart, User } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
@@ -63,6 +63,24 @@ export default function TabLayout() {
           tabBarIcon: ({ focused }) => (
             <Icon
               as={ShoppingCart}
+              size="md"
+              className={tabItemIconClass(focused)}
+            />
+          ),
+          tabBarLabel: ({ focused, children }) => (
+            <Text className={cn('text-xs', tabItemTextClass(focused))}>
+              {children}
+            </Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: 'Reports',
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              as={BarChart2}
               size="md"
               className={tabItemIconClass(focused)}
             />

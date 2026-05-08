@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
@@ -13,19 +13,31 @@ import { Text } from '@/components/ui/text';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { Icon } from '@/components/ui/icon';
-import { getCategoryLabel } from '@/lib/product-data-builders';
 import { cn } from '@/lib/cn';
 import { ProductListItem } from './components/product-list-item';
 import { fieldLabelClass, standardInputClass } from '@/theme/ui';
-import { useProductsListQuery } from '@/hooks/use-products-mutations';
 import type { Product } from '@/payload/types';
+import { fetchProductsObservable } from '@/database';
 
 export function ProductListScreen() {
   const router = useRouter();
   const { colorScheme, setColorScheme } = useColorScheme();
   const [searchText, setSearchText] = useState('');
-  const productsQuery = useProductsListQuery({ limit: 30, sort: '-createdAt' });
-  const products = productsQuery.data ?? [];
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const fetchProducts = useCallback(() => {
+    const observable = fetchProductsObservable({ search: searchText });
+    return observable.subscribe(async (p) => {
+      setProducts(p as any);
+      setIsLoadingProducts(false);
+    });
+  }, [searchText]);
+
+  useEffect(() => {
+    const subs = fetchProducts();
+    return () => subs.unsubscribe();
+  }, [fetchProducts]);
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = searchText.trim().toLowerCase();
@@ -118,7 +130,7 @@ export function ProductListScreen() {
           </HStack>
 
           <Box className="flex-1">
-            {productsQuery.isPending ? (
+            {isLoadingProducts ? (
               <VStack className="flex-1 items-center justify-center gap-3">
                 <ActivityIndicator size="small" />
                 <Text className="text-sm text-typography-500">Loading products...</Text>
@@ -135,7 +147,6 @@ export function ProductListScreen() {
                 renderItem={({ item }) => (
                   <ProductListItem
                     product={item}
-                    categoryLabel={getCategoryLabel(item.categories)}
                     onPress={handleOpenProduct}
                   />
                 )}

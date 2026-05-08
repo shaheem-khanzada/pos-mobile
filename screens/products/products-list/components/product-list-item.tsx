@@ -1,3 +1,4 @@
+import { of as of$ } from 'rxjs';
 import { Pressable } from '@/components/ui/pressable';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
@@ -6,25 +7,31 @@ import { Text } from '@/components/ui/text';
 import { Image } from '@/components/ui/image';
 import { Icon } from '@/components/ui/icon';
 import { Package } from 'lucide-react-native';
-import type { Product } from '@/payload/types';
+import Product from "@/database/model/Product";
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
 import { variationRowCardClass } from '@/theme/ui';
+import { withObservables } from '@nozbe/watermelondb/react';
+import { Media } from '@/database/model';
+import { database } from '@/database/db';
+import Category from '@/database/model/Category';
 
 const LOW_STOCK_THRESHOLD = 15;
 
 type ProductListItemProps = {
   product: Product;
-  categoryLabel: string;
+  media: Media | null;
+  category: Category | null;
   onPress: (product: Product) => void;
 };
 
-export function ProductListItem({
+export function ProductListItemBase({
   product,
-  categoryLabel,
+  media,
+  category,
   onPress,
 }: ProductListItemProps) {
-  const imageUrl = product.media.url;
+  const imageUrl = media?.url ?? undefined;
   const hasImage = Boolean(imageUrl);
   const stock = product.inventory ?? 0;
   const price = product.priceInPKR ?? 0;
@@ -68,10 +75,10 @@ export function ProductListItem({
                 numberOfLines={2}
               >
                 <Text className="font-bold">{product.title}</Text>
-                {categoryLabel ? (
+                {category ? (
                   <Text className="font-normal text-secondary-500 dark:text-typography-400">
                     {' '}
-                    ({categoryLabel})
+                    ({category.title})
                   </Text>
                 ) : null}
               </Text>
@@ -95,4 +102,11 @@ export function ProductListItem({
     </Pressable>
   );
 }
+
+export const ProductListItem = withObservables(['product'], ({ product }: ProductListItemProps) => ({
+  media: product.media.observe(),
+  category: product.categories[0]
+    ? database.get<Category>('categories').findAndObserve(product.categories[0])
+    : of$(null),
+}))(ProductListItemBase);
 

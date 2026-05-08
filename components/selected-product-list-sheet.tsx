@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   Layers,
   Package,
@@ -13,8 +14,8 @@ import { VStack } from '@/components/ui/vstack';
 import { HStack } from '@/components/ui/hstack';
 import { Pressable } from '@/components/ui/pressable';
 import {
-  BottomSheetItem,
   BottomSheetScrollView,
+  useBottomSheetContext,
 } from '@/components/ui/bottomsheet';
 import { cn } from '@/lib/cn';
 import { formatRs } from '@/lib/format-rs';
@@ -34,21 +35,34 @@ export type SelectedProductListSheetContentProps = {
   cartItems: CartItem[];
   totalUnits: number;
   subtotal: number;
+  /** When set, dismissed via `sheetRef.close()` — same pattern as create-product sheets. */
+  onRequestClose?: () => void;
   onAdjustCartItemQty: (cartItemId: string, delta: number) => void;
   onRemoveCartItem: (cartItemId: string) => void;
   onClearAll: () => void;
 };
 
 /**
- * “Your selection” cart review for the Gluestack bottom sheet portal.
+ * “Your selection” cart review. Pass `onRequestClose` when using gorhom `BottomSheetWrapper`
+ * without the Gluestack `BottomSheet` provider (e.g. barcode multi-scan).
  */
 export function SelectedProductListSheetContent({
   cartItems,
   totalUnits,
   subtotal,
+  onRequestClose,
   onAdjustCartItemQty,
   onRemoveCartItem,
 }: SelectedProductListSheetContentProps) {
+  const { handleClose } = useBottomSheetContext();
+
+  const dismissSheet = useCallback(() => {
+    if (onRequestClose) {
+      onRequestClose();
+      return;
+    }
+    handleClose();
+  }, [onRequestClose, handleClose]);
   return (
     <VStack className="flex-1 bg-app-surface">
       <BottomSheetScrollView
@@ -70,16 +84,19 @@ export function SelectedProductListSheetContent({
                 {totalUnits} total units • {formatRs(subtotal)}
               </Text>
             </VStack>
-            <BottomSheetItem
-              className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 p-0 active:opacity-80 dark:bg-[#1b1b1c]"
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close"
               hitSlop={12}
+              onPress={dismissSheet}
+              className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-background-100 active:opacity-80 dark:bg-[#1b1b1c]"
             >
               <Icon
                 as={X}
                 size="md"
                 className="text-typography-900 dark:text-typography-0"
               />
-            </BottomSheetItem>
+            </Pressable>
           </HStack>
 
           {cartItems.length === 0 ? (

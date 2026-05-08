@@ -3,12 +3,12 @@ import { Q } from '@nozbe/watermelondb';
 import { database } from '../db';
 import Order from '../model/Order';
 import OrderItem from '../model/OrderItem';
+import { extractRemoteCreatedId } from '../utils';
 import { createOrderRemote, deleteOrderRemote, updateOrderRemote } from './apis';
 import { buildOrderPushData } from './builders';
 
 export async function syncOrdersToApi() {
   const ordersCollection = database.get<Order>('orders');
-  const orderItemsCollection = database.get<OrderItem>('order_items');
 
   const createdOrders = await ordersCollection
     .query(Q.where('sync_state', 'created'))
@@ -33,15 +33,20 @@ export async function syncOrdersToApi() {
   for (const order of createdOrders) {
     try {
       const items = await order.items.fetch();
-      await createOrderRemote(order.id, buildOrderPushData(order, items as OrderItem[]));
-      await database.write(async () => {
-        await database.batch(
-          order.prepareUpdate((row) => {
-            row.syncState = 'synced';
-            row.updatedAt = new Date();
-          })
-        );
+      const response = await createOrderRemote({
+        id: order.id,
+        ...buildOrderPushData(order, items as OrderItem[]),
       });
+      const remoteId = extractRemoteCreatedId(response);
+      if (!remoteId) {
+        throw new Error('[db-push][orders] missing remote id after create');
+      }
+      if (remoteId !== order.id) {
+        throw new Error(
+          `[db-push][orders] remote id mismatch after create: remote=${remoteId} local=${order.id}`
+        );
+      }
+      await order.markAsSynced();
       pushed += 1;
     } catch {
       failed += 1;
@@ -52,14 +57,7 @@ export async function syncOrdersToApi() {
     try {
       const items = await order.items.fetch();
       await updateOrderRemote(order.id, buildOrderPushData(order, items as OrderItem[]));
-      await database.write(async () => {
-        await database.batch(
-          order.prepareUpdate((row) => {
-            row.syncState = 'synced';
-            row.updatedAt = new Date();
-          })
-        );
-      });
+      await order.markAsSynced();
       pushed += 1;
     } catch {
       failed += 1;
@@ -69,15 +67,7 @@ export async function syncOrdersToApi() {
   for (const order of deletedOrders) {
     try {
       await deleteOrderRemote(order.id);
-      const localItems = await orderItemsCollection
-        .query(Q.where('order_id', order.id))
-        .fetch();
-      await database.write(async () => {
-        await database.batch(
-          ...localItems.map((item) => item.prepareDestroyPermanently()),
-          order.prepareDestroyPermanently()
-        );
-      });
+      await order.markAsDeleted();
       deletedLocal += 1;
     } catch {
       failed += 1;

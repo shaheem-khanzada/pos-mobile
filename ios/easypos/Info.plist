@@ -34,7 +34,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+easypos</string>
+          <string>exp+starter-kit-expo</string>
         </array>
       </dict>
     </array>

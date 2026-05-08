@@ -216,8 +216,15 @@ async function writePayloadWithTarget(
 
 async function runPrint(deviceId: string, text: string): Promise<void> {
   const m = getManager();
+  /** ESC/POS initialize printer — required on many thermal units before text prints. */
+  const escInit = new Uint8Array([0x1b, 0x40]);
   const escCut = new Uint8Array([0x1d, 0x56, 0x00]);
-  const payload = concatBytes(toAsciiBytes(text), toAsciiBytes('\n\n'), escCut);
+  const payload = concatBytes(
+    escInit,
+    toAsciiBytes(text.replace(/\n/g, '\r\n')),
+    toAsciiBytes('\r\n\r\n'),
+    escCut
+  );
   const { device, targets } = await connectAndResolveTargets(deviceId);
   const cached = writeTargetCache.get(deviceId);
   const orderedTargets = cached

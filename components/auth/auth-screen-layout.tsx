@@ -23,22 +23,19 @@ export function AuthScreenLayout({
     return (
       <SafeAreaView className="flex-1 bg-background-0">
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
           <View className="flex-1">
             <ScrollView
               keyboardShouldPersistTaps="handled"
               className="flex-1"
+              showsVerticalScrollIndicator={false}
+
               contentContainerClassName="min-h-full flex-grow justify-center px-8 py-10"
             >
               <Box className="w-full max-w-md self-center">{children}</Box>
             </ScrollView>
-            {footer ? (
-              <Box className="w-full max-w-md self-center px-8 pb-8 pt-4">
-                {footer}
-              </Box>
-            ) : null}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -48,7 +45,7 @@ export function AuthScreenLayout({
   return (
     <SafeAreaView className="flex-1 bg-background-0">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView
