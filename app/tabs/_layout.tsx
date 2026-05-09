@@ -31,49 +31,42 @@ export default function AppLayout() {
         name="create-product"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="create-variant"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="create-order"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="select-products"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="barcode-scanner"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="printers"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
       <Stack.Screen
         name="edit-product/[id]"
         options={{
           headerShown: false,
-          animation: 'slide_from_right',
         }}
       />
     </Stack>
